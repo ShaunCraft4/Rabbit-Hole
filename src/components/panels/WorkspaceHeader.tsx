@@ -19,6 +19,9 @@ export function WorkspaceHeader() {
     `${countPhrase(counts.rejectedClaims, "claim", "claims")} rejected: no verifiable evidence`,
     countPhrase(counts.openGaps, "open gap", "open gaps"),
   ];
+  if (counts.browserSources > 0) {
+    chips.push(countPhrase(counts.browserSources, "source read with a live browser", "sources read with live browsers"));
+  }
 
   return (
     <header className="flex shrink-0 flex-wrap items-center justify-between gap-3 border-b border-border bg-midnight/50 px-4 py-3">

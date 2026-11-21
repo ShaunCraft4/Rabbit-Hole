@@ -1,9 +1,11 @@
 import type { NodeProps } from "@xyflow/react";
-import { Check } from "lucide-react";
+import { Check, Globe } from "lucide-react";
 
+import { BROWSER_READ_LABEL } from "@/components/panels/copy";
 import { cn } from "@/lib/utils";
 import type { ClaimFlowNode } from "@/lib/graph/build";
 import type { EvidenceStatus } from "@/lib/types";
+import { useInvestigationStore } from "@/stores/investigation";
 
 import { NodeHandles } from "./handles";
 
@@ -28,6 +30,11 @@ function evidenceIsBadge(status: EvidenceStatus): boolean {
 }
 
 export function DiscoveryNode({ data, selected }: NodeProps<ClaimFlowNode>) {
+  const readByBrowser = useInvestigationStore((state) => {
+    const claim = state.investigation?.claims.find((item) => item.id === data.claimId);
+    const source = state.investigation?.sources.find((item) => item.id === claim?.sourceId);
+    return source?.retrievedVia === "browser";
+  });
   const label = EVIDENCE_LABEL[data.evidenceStatus];
   const muted = data.evidenceStatus === "outdated" || data.evidenceStatus === "snippet_only";
 
@@ -54,12 +61,20 @@ export function DiscoveryNode({ data, selected }: NodeProps<ClaimFlowNode>) {
             {label}
           </span>
         )}
-        {data.verified ? (
-          <span className="inline-flex items-center text-golden" title="Verified quote">
-            <Check className="size-3.5" aria-hidden />
-            <span className="sr-only">Verified quote</span>
-          </span>
-        ) : null}
+        <span className="inline-flex items-center gap-1.5">
+          {readByBrowser ? (
+            <span className="inline-flex items-center text-paper/70" title={BROWSER_READ_LABEL}>
+              <Globe className="size-3" aria-hidden />
+              <span className="sr-only">{BROWSER_READ_LABEL}</span>
+            </span>
+          ) : null}
+          {data.verified ? (
+            <span className="inline-flex items-center text-golden" title="Verified quote">
+              <Check className="size-3.5" aria-hidden />
+              <span className="sr-only">Verified quote</span>
+            </span>
+          ) : null}
+        </span>
       </div>
     </div>
   );

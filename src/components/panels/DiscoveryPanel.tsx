@@ -4,6 +4,7 @@ import { useState, type FormEvent } from "react";
 import { Clock, Minus, Search, Split } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
+import { BrowserReadBadge } from "@/components/BrowserReadBadge";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -252,6 +253,7 @@ function SourceCard({ source }: { source: Source }) {
       <Badge variant="outline" className={cn("w-fit", failed ? "border-destructive text-destructive" : "border-paper/30 text-paper")}>
         {retrievalLabel(source.retrievalStatus)}
       </Badge>
+      {source.retrievedVia === "browser" ? <BrowserReadBadge /> : null}
       {href ? (
         <a
           href={href}

@@ -14,10 +14,16 @@ export function safeHttpUrl(value: string): string | null {
   return url.href;
 }
 
+export const BROWSER_READ_LABEL = "Read with a live browser";
+
+export const BROWSER_READ_TOOLTIP =
+  "The search tool could not read this page, so a cloud browser (Solari) opened it. Quotes are still verified against the page text.";
+
 export function investigationCounts(investigation: Investigation) {
   return {
     sources: investigation.sources.length,
     sourcesRead: investigation.sources.filter((source) => source.retrievalStatus === "full_text").length,
+    browserSources: investigation.sources.filter((source) => source.retrievedVia === "browser").length,
     verifiedClaims: investigation.claims.filter((claim) => claim.verified).length,
     rejectedClaims: investigation.rejectedClaims,
     openGaps: investigation.gaps.filter((gap) => gap.status === "open").length,

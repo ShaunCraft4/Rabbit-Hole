@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 
+import { BrowserReadBadge } from "@/components/BrowserReadBadge";
 import { GAP_KIND_LABEL, retrievalLabel } from "@/components/panels/copy";
 import { Button } from "@/components/ui/button";
 import { claimNodeId, gapNodeId } from "@/lib/graph/build";
@@ -333,6 +334,7 @@ export function ReportDocument({ investigation, report }: { investigation: Inves
                   <p className={`text-sm ${failed ? "text-destructive" : "text-paper/80"}`}>
                     Retrieval: {retrievalLabel(item.source.retrievalStatus)}
                   </p>
+                  {item.source.retrievedVia === "browser" ? <BrowserReadBadge /> : null}
                   {item.href ? (
                     <a
                       href={item.href}
