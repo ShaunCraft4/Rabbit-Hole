@@ -1,53 +1,27 @@
 /**
- * POST /api/analyze (STUB). Returns the fixture's gaps, evidence-status updates and
- * suggested connections, restricted to the claims actually sent in the request.
- * Replaced by the real Cheshire Cat + Mad Hatter analysis in step A4.
+ * POST /api/analyze: the Cheshire Cat (gaps, conflicts, outdated flags, corroboration) and the
+ * Mad Hatter (cross-branch connections) in one strong-model call (src/lib/ai/analyze.ts).
+ *
+ * The model only proposes; code checks every id against the request, computes corroboration from
+ * real source domains, generates ids, and returns gaps with status "open" and connections with
+ * accepted: false. Errors: 400/413 invalid request, 502 model output invalid after a retry or
+ * provider failure, 504 timeout, 429 rate limited, 500 LLM not configured.
  */
-import { MAX_BODY_BYTES, readJsonBody, respondWith, STUB_RESPONSE_INIT, stubDelay } from "@/app/api/_lib/http";
-import { mockInvestigation } from "@/fixtures";
-import {
-  AnalyzeRequestSchema,
-  AnalyzeResponseSchema,
-  type AnalyzeResponse,
-  type ClaimUpdate,
-} from "@/lib/contracts";
-import type { Gap } from "@/lib/types";
+import { errorResponseFor, MAX_BODY_BYTES, readJsonBody, respondWith } from "@/app/api/_lib/http";
+import { analyzeInvestigation } from "@/lib/ai/analyze";
+import { AnalyzeRequestSchema, AnalyzeResponseSchema } from "@/lib/contracts";
+
+/** For hosts that enforce a function time limit (Vercel); the model call itself stops at 75 s. */
+export const maxDuration = 90;
 
 export async function POST(req: Request) {
   const body = await readJsonBody(req, AnalyzeRequestSchema, MAX_BODY_BYTES.analyze);
   if (!body.ok) return body.response;
-  const { branches, claims } = body.data;
 
-  await stubDelay();
-
-  const claimIds = new Set(claims.map((c) => c.id));
-  const branchIds = new Set(branches.map((b) => b.id));
-  const fixtureClaims = new Map(mockInvestigation.claims.map((c) => [c.id, c]));
-
-  const claimUpdates: ClaimUpdate[] = claims.flatMap((c) => {
-    const fixture = fixtureClaims.get(c.id);
-    return fixture && fixture.evidenceStatus !== c.evidenceStatus
-      ? [{ claimId: c.id, evidenceStatus: fixture.evidenceStatus }]
-      : [];
-  });
-
-  const gaps: Gap[] = mockInvestigation.gaps
-    .map((g) => {
-      const { branchId, ...rest } = g;
-      return {
-        ...rest,
-        ...(branchId && branchIds.has(branchId) ? { branchId } : {}),
-        claimIds: g.claimIds.filter((id) => claimIds.has(id)),
-        status: "open" as const,
-      };
-    })
-    // A "missing" gap can stand alone; the other kinds need at least one involved claim.
-    .filter((g) => g.kind === "missing" || g.claimIds.length > 0);
-
-  const connections = mockInvestigation.connections
-    .filter((c) => claimIds.has(c.from) && claimIds.has(c.to))
-    .map((c) => ({ ...c, accepted: false }));
-
-  const response: AnalyzeResponse = { gaps, claimUpdates, connections };
-  return respondWith(AnalyzeResponseSchema, response, STUB_RESPONSE_INIT);
+  try {
+    const { response } = await analyzeInvestigation(body.data, { signal: req.signal });
+    return respondWith(AnalyzeResponseSchema, response);
+  } catch (err) {
+    return errorResponseFor(err, "analyze");
+  }
 }

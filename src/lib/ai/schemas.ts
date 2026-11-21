@@ -203,3 +203,177 @@ export const extractOutputSchema = z.preprocess(
       return { claims, malformed };
     }),
 );
+
+// ---------------------------------------------------------------------------
+// 3. ANALYZE
+// ---------------------------------------------------------------------------
+
+export type AnalyzeGapKind = "missing" | "conflict" | "outdated" | "weak";
+export type AnalyzeRelationship = "supports" | "contradicts" | "depends_on" | "related_to";
+
+export interface RawGap {
+  kind: AnalyzeGapKind;
+  question: string;
+  whyItMatters: string;
+  claimIds: string[];
+  branchId?: string;
+  suggestedQuery?: string;
+}
+
+export interface RawClaimGroup {
+  status: "corroborated" | "conflicting";
+  claimIds: string[];
+  note?: string;
+}
+
+export interface RawOutdated {
+  claimId: string;
+  reason: string;
+}
+
+export interface RawConnection {
+  from: string;
+  to: string;
+  relationship: AnalyzeRelationship;
+  explanation: string;
+}
+
+/** The analysis as the model returned it, before any id or evidence check (see src/lib/ai/analyze.ts). */
+export interface AnalyzeModelOutput {
+  gaps: RawGap[];
+  claimGroups: RawClaimGroup[];
+  outdated: RawOutdated[];
+  connections: RawConnection[];
+  /** Items dropped because they were missing a field or had an unknown kind. */
+  malformed: number;
+}
+
+/** Lowercase snake_case key for loose enum matching ("Depends on" -> "depends_on"). */
+const enumKey = (v: unknown) =>
+  typeof v === "string"
+    ? v
+        .trim()
+        .toLowerCase()
+        .replace(/[\s-]+/g, "_")
+    : "";
+
+function gapKind(v: unknown): AnalyzeGapKind | undefined {
+  const k = enumKey(v);
+  if (k.startsWith("missing") || k === "gap" || k === "unknown") return "missing";
+  if (k.startsWith("conflict") || k.startsWith("contradict")) return "conflict";
+  if (k.startsWith("outdat") || k.startsWith("stale") || k === "old") return "outdated";
+  if (k.startsWith("weak") || k.includes("condition") || k.includes("snippet") || k.includes("qualifier")) return "weak";
+  return undefined;
+}
+
+function groupStatus(v: unknown): RawClaimGroup["status"] | undefined {
+  const k = enumKey(v);
+  if (k.startsWith("corroborat") || k.startsWith("same") || k.startsWith("agree") || k === "consistent") return "corroborated";
+  if (k.startsWith("conflict") || k.startsWith("contradict")) return "conflicting";
+  return undefined;
+}
+
+function relationship(v: unknown): AnalyzeRelationship | undefined {
+  const k = enumKey(v);
+  if (k.startsWith("depend") || k === "requires" || k === "prerequisite") return "depends_on";
+  if (k.startsWith("support")) return "supports";
+  if (k.startsWith("contradict") || k.startsWith("conflict")) return "contradicts";
+  if (k.startsWith("related") || k === "relates_to") return "related_to";
+  return undefined;
+}
+
+/** Trimmed, non-empty text, cut to `max` characters (model prose; cutting is harmless). */
+const prose = (max: number) =>
+  z
+    .string()
+    .transform((s) => s.replace(/\s+/g, " ").trim().slice(0, max))
+    .pipe(z.string().min(1));
+
+const optionalProse = (max: number) =>
+  z
+    .string()
+    .nullish()
+    .transform((s) => s?.replace(/\s+/g, " ").trim().slice(0, max) || undefined);
+
+/** A list of ids: strings only, trimmed, de-duplicated (order kept). */
+const idList = z
+  .array(z.unknown())
+  .nullish()
+  .transform((list) => [
+    ...new Set((list ?? []).flatMap((x) => (typeof x === "string" && x.trim() ? [x.trim()] : []))),
+  ]);
+
+const GapItemSchema = z.object({
+  kind: z.unknown().transform(gapKind).pipe(z.enum(["missing", "conflict", "outdated", "weak"])),
+  question: prose(LIMITS.gapQuestionChars),
+  whyItMatters: prose(LIMITS.gapWhyChars),
+  claimIds: idList,
+  branchId: optionalProse(LIMITS.idChars),
+  suggestedQuery: z
+    .string()
+    .nullish()
+    .transform((q) => (q ? cleanQuery(q).slice(0, LIMITS.queryChars) || undefined : undefined)),
+});
+
+const GroupItemSchema = z.object({
+  status: z.unknown().transform(groupStatus).pipe(z.enum(["corroborated", "conflicting"])),
+  claimIds: idList,
+  note: optionalProse(LIMITS.explanationChars),
+});
+
+const OutdatedItemSchema = z.object({
+  claimId: z.string().trim().min(1),
+  reason: prose(LIMITS.explanationChars),
+});
+
+const ConnectionItemSchema = z.object({
+  from: z.string().trim().min(1),
+  to: z.string().trim().min(1),
+  relationship: z.unknown().transform(relationship).pipe(z.enum(["supports", "contradicts", "depends_on", "related_to"])),
+  explanation: prose(LIMITS.explanationChars),
+});
+
+/** Most items of each kind read from the reply; the code keeps far fewer. */
+const ANALYZE_MAX_ITEMS = 30;
+
+function parseItems<T>(schema: z.ZodType<T>, list: unknown[] | null | undefined, onBad: () => void): T[] {
+  const out: T[] = [];
+  for (const item of (list ?? []).slice(0, ANALYZE_MAX_ITEMS)) {
+    const parsed = schema.safeParse(item);
+    if (parsed.success) out.push(parsed.data);
+    else onBad();
+  }
+  return out;
+}
+
+/**
+ * Model output schema for the analysis. Only the top-level shape can fail (which triggers the
+ * one repair retry). Each item is parsed on its own; a bad item is counted and dropped.
+ * Ids are NOT checked here: src/lib/ai/analyze.ts checks every id against the request.
+ */
+export const analyzeOutputSchema = z
+  .object(
+    {
+      gaps: z.array(z.unknown()).nullish(),
+      claimGroups: z.array(z.unknown()).nullish(),
+      groups: z.array(z.unknown()).nullish(),
+      outdated: z.array(z.unknown()).nullish(),
+      connections: z.array(z.unknown()).nullish(),
+    },
+    { error: 'the reply must be one JSON object with "gaps", "claimGroups", "outdated" and "connections" arrays' },
+  )
+  .refine(
+    (raw) => [raw.gaps, raw.claimGroups, raw.groups, raw.outdated, raw.connections].some((v) => v !== undefined),
+    { error: 'the reply must have top-level "gaps", "claimGroups", "outdated" and "connections" arrays (use [] when empty)' },
+  )
+  .transform((raw): AnalyzeModelOutput => {
+    let malformed = 0;
+    const bad = () => {
+      malformed++;
+    };
+    const gaps = parseItems(GapItemSchema, raw.gaps, bad);
+    const claimGroups = parseItems(GroupItemSchema, raw.claimGroups ?? raw.groups, bad);
+    const outdated = parseItems(OutdatedItemSchema, raw.outdated, bad);
+    const connections = parseItems(ConnectionItemSchema, raw.connections, bad);
+    return { gaps, claimGroups, outdated, connections, malformed };
+  });
