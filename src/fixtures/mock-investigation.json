@@ -1,0 +1,359 @@
+{
+  "_mock": true,
+  "id": "mock-espf-investigation",
+  "question": "How can I get funding for a student organization event at Example University?",
+  "assumptions": [
+    "Assuming you belong to a registered student organization at Example University.",
+    "Assuming the event takes place during the 2026-27 academic year."
+  ],
+  "branches": [
+    {
+      "id": "funding-sources",
+      "title": "Funding sources",
+      "question": "Which campus funds can a registered student organization apply to for an event, and how much do they award?",
+      "queries": [
+        "Example University student organization event funding sources",
+        "Example Student Programming Fund award amount per event"
+      ],
+      "status": "done"
+    },
+    {
+      "id": "eligibility-costs",
+      "title": "Eligibility and allowed costs",
+      "question": "Who is eligible for event funding, and which expenses, such as food, can it cover?",
+      "queries": [
+        "Example Student Programming Fund eligibility registered organizations",
+        "Example University student organization allowable expenses food reimbursement"
+      ],
+      "status": "done"
+    },
+    {
+      "id": "deadlines-process",
+      "title": "Deadlines and application process",
+      "question": "What are the current application deadlines and steps for event funding?",
+      "queries": [
+        "Example Student Programming Fund application deadline 2026-27",
+        "how to apply Example Student Programming Fund request form"
+      ],
+      "status": "done"
+    },
+    {
+      "id": "event-approval",
+      "title": "Event registration and venue",
+      "question": "What approvals and venue bookings are required before a funded event?",
+      "queries": [
+        "Example University register student organization event approval",
+        "Example University on-campus venue reservation student organization"
+      ],
+      "status": "done"
+    }
+  ],
+  "sources": [
+    {
+      "id": "src_7c1e9a42",
+      "url": "https://asg.exampleu.example/funding/espf-guidelines",
+      "domain": "asg.exampleu.example",
+      "title": "Example Student Programming Fund (ESPF): 2026-27 Guidelines",
+      "retrievalStatus": "full_text",
+      "publishedAt": "2026-08-15",
+      "snippet": "Registered student organizations may request up to $1,500 per event from the Example Student Programming Fund. Applications must be submitted at least 21 calendar days before the event date.",
+      "retrievedVia": "keenable"
+    },
+    {
+      "id": "src_2b8f4d10",
+      "url": "https://finance.exampleu.example/student-orgs/allowable-expenses",
+      "domain": "finance.exampleu.example",
+      "title": "Allowable Expenses for Student Organization Funds",
+      "retrievalStatus": "full_text",
+      "publishedAt": "2026-07-01",
+      "snippet": "Food is an allowable expense only when it is incidental to an approved program and may not exceed $10 per expected attendee.",
+      "retrievedVia": "browser"
+    },
+    {
+      "id": "src_5e3a7b91",
+      "url": "https://studentorgs.exampleu.example/events/plan-an-event",
+      "domain": "studentorgs.exampleu.example",
+      "title": "Plan an Event: Registration, Venues and Funding",
+      "retrievalStatus": "full_text",
+      "snippet": "Venue reservation requests for on-campus spaces must be made at least 30 days in advance.",
+      "retrievedVia": "keenable"
+    },
+    {
+      "id": "src_9d4c2e67",
+      "url": "https://news.exampleu.example/2024/09/espf-cycle-opens",
+      "domain": "news.exampleu.example",
+      "title": "ESPF Opens for the 2024-25 Academic Year",
+      "retrievalStatus": "full_text",
+      "publishedAt": "2024-09-03",
+      "snippet": "The Example Student Programming Fund is now accepting requests. Applications for the 2024-25 cycle must be received no later than 14 days prior to the event.",
+      "retrievedVia": "keenable"
+    },
+    {
+      "id": "src_4a6f1c08",
+      "url": "https://forum.campustalk.example/t/espf-reimbursement-timeline/1182",
+      "domain": "forum.campustalk.example",
+      "title": "How long did your ESPF reimbursement take?",
+      "retrievalStatus": "snippet_only",
+      "snippet": "honestly the application was easy but it took about six weeks for the reimbursement to actually show up, so only front the money if you can wait",
+      "retrievedVia": "keenable"
+    },
+    {
+      "id": "src_e0b7d3f5",
+      "url": "https://www.studentleaderhub.example/guides/event-budgeting",
+      "domain": "www.studentleaderhub.example",
+      "title": "A Student Leader's Guide to Event Budgets",
+      "retrievalStatus": "failed",
+      "snippet": "Budgeting tips for student leaders planning their first campus event."
+    }
+  ],
+  "claims": [
+    {
+      "id": "funding-sources-c1",
+      "branchId": "funding-sources",
+      "text": "Registered student organizations can request up to $1,500 per event from the Example Student Programming Fund (ESPF).",
+      "excerpt": "Registered student organizations may request up to $1,500 per event from the Example Student Programming Fund.",
+      "sourceId": "src_7c1e9a42",
+      "verified": true,
+      "evidenceStatus": "corroborated",
+      "dateMentioned": "2026-27 academic year"
+    },
+    {
+      "id": "funding-sources-c2",
+      "branchId": "funding-sources",
+      "text": "An organization can receive ESPF funding for at most two events per academic quarter.",
+      "excerpt": "Each organization may be funded for no more than two events per academic quarter.",
+      "sourceId": "src_7c1e9a42",
+      "verified": true,
+      "evidenceStatus": "single_source"
+    },
+    {
+      "id": "funding-sources-c3",
+      "branchId": "funding-sources",
+      "text": "The Student Organization Center also directs event hosts to the ESPF and describes awards of up to $1,500 per event.",
+      "excerpt": "Organizations hosting campus events can apply to the Example Student Programming Fund for up to $1,500 per event.",
+      "sourceId": "src_5e3a7b91",
+      "verified": true,
+      "evidenceStatus": "corroborated"
+    },
+    {
+      "id": "eligibility-costs-c1",
+      "branchId": "eligibility-costs",
+      "text": "Only organizations that have completed re-registration for the current academic year are eligible for ESPF funding.",
+      "excerpt": "To be eligible, an organization must have completed annual re-registration for the current academic year before submitting a request.",
+      "sourceId": "src_7c1e9a42",
+      "verified": true,
+      "evidenceStatus": "single_source"
+    },
+    {
+      "id": "eligibility-costs-c2",
+      "branchId": "eligibility-costs",
+      "text": "Food is an allowable expense only when it is incidental to an approved program, and it is capped at $10 per expected attendee.",
+      "excerpt": "Food is an allowable expense only when it is incidental to an approved program and may not exceed $10 per expected attendee.",
+      "sourceId": "src_2b8f4d10",
+      "verified": true,
+      "evidenceStatus": "single_source"
+    },
+    {
+      "id": "eligibility-costs-c3",
+      "branchId": "eligibility-costs",
+      "text": "Reimbursement requests need itemized receipts and must be submitted within 30 days of the event date.",
+      "excerpt": "Reimbursement requests must include itemized receipts and be submitted within 30 days of the event date.",
+      "sourceId": "src_2b8f4d10",
+      "verified": true,
+      "evidenceStatus": "single_source"
+    },
+    {
+      "id": "eligibility-costs-c4",
+      "branchId": "eligibility-costs",
+      "text": "One student reported that an ESPF reimbursement took about six weeks to arrive.",
+      "excerpt": "it took about six weeks for the reimbursement to actually show up",
+      "sourceId": "src_4a6f1c08",
+      "verified": true,
+      "evidenceStatus": "snippet_only"
+    },
+    {
+      "id": "deadlines-process-c1",
+      "branchId": "deadlines-process",
+      "text": "Under the current guidelines, ESPF applications must be submitted at least 21 calendar days before the event date.",
+      "excerpt": "Applications must be submitted at least 21 calendar days before the event date.",
+      "sourceId": "src_7c1e9a42",
+      "verified": true,
+      "evidenceStatus": "conflicting",
+      "dateMentioned": "2026-27 academic year"
+    },
+    {
+      "id": "deadlines-process-c2",
+      "branchId": "deadlines-process",
+      "text": "A 2024 announcement said ESPF applications for the 2024-25 cycle were due no later than 14 days before the event.",
+      "excerpt": "Applications for the 2024-25 cycle must be received no later than 14 days prior to the event.",
+      "sourceId": "src_9d4c2e67",
+      "verified": true,
+      "evidenceStatus": "outdated",
+      "dateMentioned": "2024-25 cycle"
+    },
+    {
+      "id": "deadlines-process-c3",
+      "branchId": "deadlines-process",
+      "text": "ESPF requests are submitted through an online request form and reviewed at the finance committee's weekly meeting.",
+      "excerpt": "Submit your request through the online ESPF request form; the finance committee reviews requests at its weekly meeting.",
+      "sourceId": "src_7c1e9a42",
+      "verified": true,
+      "evidenceStatus": "single_source"
+    },
+    {
+      "id": "event-approval-c1",
+      "branchId": "event-approval",
+      "text": "On-campus venue reservations must be requested at least 30 days before the event.",
+      "excerpt": "Venue reservation requests for on-campus spaces must be made at least 30 days in advance.",
+      "sourceId": "src_5e3a7b91",
+      "verified": true,
+      "evidenceStatus": "single_source"
+    },
+    {
+      "id": "event-approval-c2",
+      "branchId": "event-approval",
+      "text": "ESPF funds are released only after the event has been registered with and approved by the Student Organization Center.",
+      "excerpt": "Funding from the Example Student Programming Fund is released only after your event has been registered and approved by the Student Organization Center.",
+      "sourceId": "src_5e3a7b91",
+      "verified": true,
+      "evidenceStatus": "single_source"
+    }
+  ],
+  "gaps": [
+    {
+      "id": "gap-offcampus-venue",
+      "branchId": "eligibility-costs",
+      "question": "Can ESPF funds pay for an off-campus venue, or only for on-campus spaces?",
+      "whyItMatters": "If off-campus venues are not covered, the event location may need to change before you apply.",
+      "kind": "missing",
+      "claimIds": ["funding-sources-c1", "event-approval-c1"],
+      "suggestedQuery": "Example Student Programming Fund off-campus venue eligibility",
+      "status": "open"
+    },
+    {
+      "id": "gap-deadline-conflict",
+      "branchId": "deadlines-process",
+      "question": "Is the ESPF application deadline 21 days or 14 days before the event?",
+      "whyItMatters": "Planning around 14 days could miss the current 21-day deadline; the two pages may describe different funding cycles.",
+      "kind": "conflict",
+      "claimIds": ["deadlines-process-c1", "deadlines-process-c2"],
+      "suggestedQuery": "Example Student Programming Fund 2026-27 application deadline",
+      "status": "open"
+    },
+    {
+      "id": "gap-old-cycle",
+      "branchId": "deadlines-process",
+      "question": "Has the 2024-25 ESPF announcement been replaced by current-year guidance?",
+      "whyItMatters": "The announcement describes a past cycle, so its deadline and process may no longer apply.",
+      "kind": "outdated",
+      "claimIds": ["deadlines-process-c2"],
+      "suggestedQuery": "Example Student Programming Fund 2026-27 guidelines update",
+      "status": "open"
+    }
+  ],
+  "connections": [
+    {
+      "id": "conn-venue-before-funding",
+      "from": "deadlines-process-c1",
+      "to": "event-approval-c1",
+      "relationship": "depends_on",
+      "explanation": "The ESPF application is due 21 days out, but venue requests need 30 days, so the venue has to be requested before the funding application to keep both on time.",
+      "accepted": true
+    },
+    {
+      "id": "conn-food-cap-vs-award",
+      "from": "eligibility-costs-c2",
+      "to": "funding-sources-c1",
+      "relationship": "related_to",
+      "explanation": "If most of the budget is food, the $10-per-attendee food cap may limit the award well below the $1,500 maximum.",
+      "accepted": false
+    }
+  ],
+  "report": {
+    "directAnswer": "Your organization can likely request up to $1,500 per event from the Example Student Programming Fund, as long as it has re-registered for the current academic year. Work backward from the event date: on-campus venue requests need 30 days of notice, and the current guidelines ask for the ESPF application at least 21 days ahead, although an older announcement lists 14 days. Food counts only when it is incidental to the program and is capped at $10 per expected attendee. Expenses are reimbursed after the event, so plan to cover some costs up front.",
+    "keyDiscoveries": [
+      {
+        "claimId": "funding-sources-c1",
+        "summary": "The ESPF awards up to $1,500 per event, a figure two campus offices agree on."
+      },
+      {
+        "claimId": "eligibility-costs-c1",
+        "summary": "Only organizations re-registered for the current academic year are eligible."
+      },
+      {
+        "claimId": "event-approval-c1",
+        "summary": "On-campus venues must be requested at least 30 days in advance."
+      },
+      {
+        "claimId": "deadlines-process-c1",
+        "summary": "Current guidelines require the application at least 21 calendar days before the event."
+      },
+      {
+        "claimId": "event-approval-c2",
+        "summary": "Funds are released only after the event is registered and approved."
+      },
+      {
+        "claimId": "eligibility-costs-c2",
+        "summary": "Food is allowed only when incidental to the program, capped at $10 per expected attendee."
+      },
+      {
+        "claimId": "eligibility-costs-c3",
+        "summary": "Reimbursement requests need itemized receipts within 30 days of the event."
+      }
+    ],
+    "planChangingConnections": [
+      {
+        "connectionId": "conn-venue-before-funding",
+        "text": "Request the venue first: its 30-day lead time comes before the 21-day funding deadline, and funds are only released for approved events."
+      }
+    ],
+    "uncertainties": [
+      {
+        "gapId": "gap-deadline-conflict",
+        "text": "The current guidelines say 21 days, but a 2024 announcement says 14 days. Confirm which applies to your event."
+      },
+      {
+        "gapId": "gap-old-cycle",
+        "text": "The 14-day figure comes from a 2024-25 announcement that may be out of date."
+      },
+      {
+        "gapId": "gap-offcampus-venue",
+        "text": "None of the sources say whether an off-campus venue can be funded."
+      },
+      {
+        "text": "The six-week reimbursement time comes from a single forum post, and only a search snippet of it was read."
+      }
+    ],
+    "nextSteps": [
+      {
+        "step": "Confirm that your organization has completed re-registration for the current academic year.",
+        "reason": "Organizations that have not re-registered are not eligible."
+      },
+      {
+        "step": "Choose a date at least 30 days out and submit the on-campus venue reservation request.",
+        "reason": "The venue lead time is longer than the funding deadline."
+      },
+      {
+        "step": "Register the event with the Student Organization Center.",
+        "reason": "Funds are released only for registered, approved events."
+      },
+      {
+        "step": "Submit the ESPF request form at least 21 calendar days before the event, asking for no more than $1,500.",
+        "reason": "The current guidelines set a 21-day minimum; the 14-day figure is from an older cycle."
+      },
+      {
+        "step": "Keep food at or under $10 per expected attendee and save itemized receipts for every purchase.",
+        "reason": "Food must be incidental to the program, and receipts are required for reimbursement."
+      },
+      {
+        "step": "File the reimbursement request within 30 days of the event date.",
+        "reason": "The finance office requires requests within that window."
+      },
+      {
+        "step": "Ask the ESPF finance committee whether an off-campus venue can be funded before you commit to one.",
+        "reason": "None of the sources answered this."
+      }
+    ]
+  },
+  "rejectedClaims": 3
+}
