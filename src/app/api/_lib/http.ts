@@ -4,6 +4,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 
+import { LLMError } from "@/lib/ai/client";
 import { API_ERROR_CODES, LIMITS, type ApiError } from "@/lib/contracts";
 
 /** Request body caps in bytes, per route. */
@@ -83,6 +84,32 @@ export function respondWith<S extends z.ZodType>(
     return apiError(500, API_ERROR_CODES.INTERNAL, "The server produced an invalid response.");
   }
   return NextResponse.json(parsed.data, init);
+}
+
+/**
+ * Maps an exception from a route's work to the contract error shape.
+ * Details go to the server log (already redacted by the LLM client); the client gets a
+ * short, safe message.
+ */
+export function errorResponseFor(err: unknown, label: string): NextResponse<ApiError> {
+  if (err instanceof LLMError) {
+    console.warn(`[api] ${label}: ${err.code}${err.status ? ` (provider HTTP ${err.status})` : ""}: ${err.message}`);
+    switch (err.code) {
+      case "LLM_INVALID_OUTPUT":
+        return apiError(502, API_ERROR_CODES.MODEL_OUTPUT_INVALID, `The model returned invalid output for ${label}, even after a retry. Please try again.`);
+      case "LLM_TIMEOUT":
+      case "LLM_ABORTED":
+        return apiError(504, API_ERROR_CODES.TIMEOUT, `The model took too long to answer (${label}). Please try again.`);
+      case "LLM_RATE_LIMITED":
+        return apiError(429, API_ERROR_CODES.RATE_LIMITED, "The model provider is rate limiting requests. Please wait a moment and try again.");
+      case "LLM_NOT_CONFIGURED":
+        return apiError(500, API_ERROR_CODES.INTERNAL, "The server's LLM is not configured correctly (check LLM_* in .env.local and the server log).");
+      case "LLM_UPSTREAM":
+        return apiError(502, API_ERROR_CODES.UPSTREAM_ERROR, `The model provider failed (${label}). Please try again.`);
+    }
+  }
+  console.error(`[api] ${label}: unexpected error`, err);
+  return apiError(500, API_ERROR_CODES.INTERNAL, "Something went wrong on the server.");
 }
 
 /** Marks stub responses so they are easy to tell apart from real ones in devtools. */
