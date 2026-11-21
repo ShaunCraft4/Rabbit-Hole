@@ -13,6 +13,8 @@ import OpenAI from "openai";
 import type { ChatCompletionCreateParamsNonStreaming, ChatCompletionMessageParam } from "openai/resources/chat/completions";
 import type { z } from "zod";
 
+import { redactSecrets } from "./redact";
+
 export type ModelTier = "fast" | "strong";
 
 export type LLMErrorCode =
@@ -80,7 +82,9 @@ function clientFor(cfg: LLMConfig): OpenAI {
   const key = `${cfg.baseURL}\n${cfg.apiKey}`;
   let client = clients.get(key);
   if (!client) {
-    // maxRetries 1: the SDK backs off once on 429/5xx/connection errors, inside our deadline.
+    // maxRetries 1: the SDK backs off once (honoring Retry-After) on 408/409/429, 5xx (including
+    // Anthropic's 529 "overloaded") and connection errors, inside our deadline. Verified with the
+    // fake server in scripts/test-hardening.ts.
     client = new OpenAI({ baseURL: cfg.baseURL, apiKey: cfg.apiKey, maxRetries: 1, timeout: DEFAULT_TIMEOUT_MS });
     clients.set(key, client);
   }
@@ -94,10 +98,7 @@ const unsupported = new Map<string, { responseFormat?: boolean; temperature?: bo
 function redact(text: string, secret?: string): string {
   let out = text;
   if (secret && secret.length >= 6) out = out.split(secret).join("[redacted]");
-  return out
-    .replace(/\b(sk|pk|rk|keen|gsk|xai|key)[-_][A-Za-z0-9_\-*.]{6,}/gi, "[redacted]")
-    .replace(/\bBearer\s+[A-Za-z0-9_\-.=]{8,}/gi, "Bearer [redacted]")
-    .slice(0, 500);
+  return redactSecrets(out).slice(0, 500);
 }
 
 /** Pulls the JSON value out of a model reply: strips ``` fences and any prose around it. */

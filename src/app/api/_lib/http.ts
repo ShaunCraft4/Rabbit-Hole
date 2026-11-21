@@ -5,6 +5,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 
 import { LLMError } from "@/lib/ai/client";
+import { containsSecret, redactSecrets } from "@/lib/ai/redact";
 import { API_ERROR_CODES, LIMITS, type ApiError } from "@/lib/contracts";
 
 /** Request body caps in bytes, per route. */
@@ -17,9 +18,33 @@ export const MAX_BODY_BYTES = {
 
 export function apiError(status: number, code: string, message: string): NextResponse<ApiError> {
   const body: ApiError = {
-    error: { code, message: message.slice(0, LIMITS.errorMessageChars) },
+    error: { code, message: redactSecrets(message).slice(0, LIMITS.errorMessageChars) },
   };
   return NextResponse.json(body, { status });
+}
+
+const TOO_LARGE = Symbol("too large");
+
+/**
+ * Reads the body as text, stopping as soon as it exceeds maxBytes, so a huge or endless body
+ * (chunked, with no Content-Length) is never buffered in full.
+ */
+async function readLimited(req: Request, maxBytes: number): Promise<string | typeof TOO_LARGE> {
+  if (!req.body) return "";
+  const reader = req.body.getReader();
+  const chunks: Uint8Array[] = [];
+  let total = 0;
+  for (;;) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    total += value.byteLength;
+    if (total > maxBytes) {
+      await reader.cancel().catch(() => {});
+      return TOO_LARGE;
+    }
+    chunks.push(value);
+  }
+  return Buffer.concat(chunks).toString("utf8");
 }
 
 function describeIssues(error: z.ZodError): string {
@@ -43,13 +68,13 @@ export async function readJsonBody<S extends z.ZodType>(
   const declared = Number(req.headers.get("content-length") ?? 0);
   if (Number.isFinite(declared) && declared > maxBytes) return { ok: false, response: tooLarge() };
 
-  let raw: string;
+  let raw: string | typeof TOO_LARGE;
   try {
-    raw = await req.text();
+    raw = await readLimited(req, maxBytes);
   } catch {
     return { ok: false, response: apiError(400, API_ERROR_CODES.INVALID_JSON, "Could not read the request body.") };
   }
-  if (Buffer.byteLength(raw, "utf8") > maxBytes) return { ok: false, response: tooLarge() };
+  if (raw === TOO_LARGE) return { ok: false, response: tooLarge() };
 
   let json: unknown;
   try {
@@ -83,6 +108,11 @@ export function respondWith<S extends z.ZodType>(
     console.error("[api] response failed contract validation:", describeIssues(parsed.error));
     return apiError(500, API_ERROR_CODES.INTERNAL, "The server produced an invalid response.");
   }
+  // Last line of defense: never send a response that contains the value of a server secret.
+  if (containsSecret(JSON.stringify(parsed.data))) {
+    console.error("[api] blocked a response that contained a server secret");
+    return apiError(500, API_ERROR_CODES.INTERNAL, "The server produced an invalid response.");
+  }
   return NextResponse.json(parsed.data, init);
 }
 
@@ -108,7 +138,8 @@ export function errorResponseFor(err: unknown, label: string): NextResponse<ApiE
         return apiError(502, API_ERROR_CODES.UPSTREAM_ERROR, `The model provider failed (${label}). Please try again.`);
     }
   }
-  console.error(`[api] ${label}: unexpected error`, err);
+  const detail = err instanceof Error ? (err.stack ?? `${err.name}: ${err.message}`) : String(err);
+  console.error(`[api] ${label}: unexpected error: ${redactSecrets(detail).slice(0, 1200)}`);
   return apiError(500, API_ERROR_CODES.INTERNAL, "Something went wrong on the server.");
 }
 

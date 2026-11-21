@@ -17,6 +17,8 @@
 import type { BrowserSession, Solari } from "@solarisdk/browser";
 import pLimit from "p-limit";
 
+import { redactSecrets } from "@/lib/ai/redact";
+
 import { SOLARI } from "./budget";
 
 export interface BrowserPage {
@@ -130,7 +132,8 @@ function describe(err: unknown, deadline: AbortSignal): string {
   if (e?.name === "AbortError" || e?.name === "TimeoutError") return "stopped by the caller's time limit";
   // SolariError codes are strings, e.g. "ConcurrencyLimitExceeded" (429) or "FeatureRequiresPlan" (402).
   if (typeof e?.code === "string") return `${e.code}${e.status ? ` (HTTP ${e.status})` : ""}`;
-  return `${e?.name ?? "error"}: ${(e?.message ?? String(err)).split("\n")[0].slice(0, 160)}`;
+  // Driver messages can contain the session's websocket URL, which is a credential.
+  return redactSecrets(`${e?.name ?? "error"}: ${(e?.message ?? String(err)).split("\n")[0]}`).slice(0, 200);
 }
 
 /** One browser read, from launch to close. Never throws. */

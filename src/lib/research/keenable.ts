@@ -10,6 +10,8 @@
  */
 import { z } from "zod";
 
+import { redactSecrets } from "@/lib/ai/redact";
+
 import { KEENABLE } from "./budget";
 
 const BASE_URL = "https://api.keenable.ai";
@@ -35,7 +37,7 @@ export class KeenableError extends Error {
     message: string,
     opts: { code: KeenableErrorCode; status?: number; retryable?: boolean; requestId?: string },
   ) {
-    super(message);
+    super(redactSecrets(message).slice(0, 500));
     this.name = "KeenableError";
     this.code = opts.code;
     this.status = opts.status;
@@ -47,6 +49,8 @@ export class KeenableError extends Error {
 const ErrorBodySchema = z.object({
   error: z.string().optional(),
   message: z.string().optional(),
+  /** "target_error" = the page itself could not be read (not an API problem). */
+  type: z.string().optional(),
   code: z.string().optional(),
   retryable: z.boolean().optional(),
   retry_after_seconds: z.number().optional(),
@@ -132,10 +136,14 @@ async function attempt(spec: RequestSpec): Promise<{ res: Response; json: unknow
   return { res, json };
 }
 
+/** 500 to 1000 ms: one short, jittered back-off before the single retry. */
+const backoffMs = () => 500 + Math.floor(Math.random() * 500);
+
 /**
- * One Keenable call with a 15 s timeout and ONE retry on network errors or 429
- * (honoring Retry-After up to a few seconds). Returns the parsed JSON body on 2xx;
- * throws KeenableError otherwise.
+ * One Keenable call with a 15 s timeout and ONE retry, after a back-off, on network errors, 429
+ * (honoring Retry-After up to a few seconds) and transient 5xx errors. Not retried: timeouts (a second
+ * 15 s wait would blow the branch budget) and page-level failures (type "target_error", e.g. a dead
+ * page), which a retry cannot fix. Returns the parsed JSON body on 2xx; throws KeenableError otherwise.
  */
 export async function keenableRequest(spec: RequestSpec): Promise<unknown> {
   for (let tryNo = 0; ; tryNo++) {
@@ -152,7 +160,7 @@ export async function keenableRequest(spec: RequestSpec): Promise<unknown> {
         });
       }
       if (canRetry) {
-        await sleep(500, spec.signal);
+        await sleep(backoffMs(), spec.signal);
         continue;
       }
       throw new KeenableError(`Network error calling Keenable: ${(err as Error).message}`, {
@@ -188,6 +196,12 @@ export async function keenableRequest(spec: RequestSpec): Promise<unknown> {
         retryable: true,
         requestId,
       });
+    }
+
+    const transient = res.status >= 500 && err?.type !== "target_error" && err?.retryable !== false;
+    if (transient && canRetry) {
+      await sleep(backoffMs(), spec.signal);
+      continue;
     }
 
     throw new KeenableError(message, {
