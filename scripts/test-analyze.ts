@@ -11,8 +11,6 @@
  * Live and mock modes read .env.local themselves (mock mode then points the LLM at the fake server).
  */
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
-import { createServer } from "node:http";
-import type { AddressInfo } from "node:net";
 import { join } from "node:path";
 
 import { errorResponseFor } from "@/app/api/_lib/http";
@@ -27,6 +25,8 @@ import {
 } from "@/lib/contracts";
 import { researchBranch } from "@/lib/research/pipeline";
 import type { Claim } from "@/lib/types";
+
+import { startMockLLM } from "./mock-llm";
 
 const args = process.argv.slice(2);
 const flag = (name: string) => args.includes(name);
@@ -238,33 +238,7 @@ function offline() {
 
 async function mockRetry() {
   loadEnv();
-  const replies: string[] = [];
-  let calls = 0;
-  const server = createServer((req, res) => {
-    let body = "";
-    req.on("data", (chunk) => (body += chunk));
-    req.on("end", () => {
-      calls++;
-      const content = replies.shift() ?? "still not json";
-      res.setHeader("content-type", "application/json");
-      res.end(
-        JSON.stringify({
-          id: `mock-${calls}`,
-          object: "chat.completion",
-          created: 0,
-          model: "mock-model",
-          choices: [{ index: 0, message: { role: "assistant", content }, finish_reason: "stop" }],
-          usage: { prompt_tokens: 1, completion_tokens: 1, total_tokens: 2 },
-        }),
-      );
-    });
-  });
-  await new Promise<void>((resolve) => server.listen(0, "127.0.0.1", resolve));
-  const port = (server.address() as AddressInfo).port;
-  process.env.LLM_BASE_URL = `http://127.0.0.1:${port}/v1`;
-  process.env.LLM_API_KEY = "";
-  process.env.LLM_MODEL_STRONG = "mock-model";
-  process.env.LLM_MODEL_FAST = "mock-model";
+  const mock = await startMockLLM();
 
   const req: AnalyzeRequest = {
     question: "How do I fund a club event?",
@@ -284,7 +258,7 @@ async function mockRetry() {
   };
 
   // 1. Invalid, then valid: one retry, success.
-  replies.push(
+  mock.replies.push(
     "Sure! Here is my analysis: the gaps are about food.",
     JSON.stringify({
       gaps: [
@@ -301,14 +275,14 @@ async function mockRetry() {
       connections: [],
     }),
   );
-  calls = 0;
+  mock.reset();
   const run = await analyzeInvestigation(req);
-  check(calls === 2, `invalid first reply is retried exactly once (${calls} calls)`);
+  check(mock.calls() === 2, `invalid first reply is retried exactly once (${mock.calls()} calls)`);
   check(run.response.gaps.length === 1, "the corrected reply is used");
 
   // 2. Invalid twice: no third call, LLM_INVALID_OUTPUT -> HTTP 502 MODEL_OUTPUT_INVALID.
-  replies.push("not json", JSON.stringify({ analysis: "still the wrong shape" }));
-  calls = 0;
+  mock.replies.push("not json", JSON.stringify({ analysis: "still the wrong shape" }));
+  mock.reset();
   let status = 0;
   let code = "";
   try {
@@ -318,11 +292,9 @@ async function mockRetry() {
     status = res.status;
     code = ((await res.json()) as { error: { code: string } }).error.code;
   }
-  check(calls === 2, `still invalid after the retry: gives up after 2 calls (${calls})`);
+  check(mock.calls() === 2, `still invalid after the retry: gives up after 2 calls (${mock.calls()})`);
   check(status === 502 && code === "MODEL_OUTPUT_INVALID", `route answers HTTP ${status} ${code}`);
-  // Close keep-alive sockets and wait, or process.exit trips a libuv assertion on Windows.
-  server.closeAllConnections();
-  await new Promise<void>((resolve) => server.close(() => resolve()));
+  await mock.close();
 }
 
 // ---------------------------------------------------------------------------

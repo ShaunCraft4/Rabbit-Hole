@@ -377,3 +377,74 @@ export const analyzeOutputSchema = z
     const connections = parseItems(ConnectionItemSchema, raw.connections, bad);
     return { gaps, claimGroups, outdated, connections, malformed };
   });
+
+// ---------------------------------------------------------------------------
+// 4. REPORT
+// ---------------------------------------------------------------------------
+
+/** The report as the model returned it, before id and grounding checks (see src/lib/ai/report.ts). */
+export interface RawReport {
+  directAnswer: string;
+  keyDiscoveries: { claimId: string; summary: string }[];
+  planChangingConnections: { connectionId: string; text: string }[];
+  uncertainties: { gapId?: string; text: string }[];
+  nextSteps: { step: string; reason?: string; basedOn: string[] }[];
+  malformed: number;
+}
+
+/** A bare string where an object was expected becomes {[key]: string}. */
+const fromString = (key: string) => (v: unknown) => (typeof v === "string" ? { [key]: v } : v);
+
+const DiscoveryItemSchema = z.object({
+  claimId: z.string().trim().min(1),
+  summary: prose(LIMITS.reportItemChars),
+});
+
+const ConnectionTextItemSchema = z.object({
+  connectionId: z.string().trim().min(1),
+  text: prose(LIMITS.reportItemChars),
+});
+
+const UncertaintyItemSchema = z.preprocess(
+  fromString("text"),
+  z.object({ gapId: optionalProse(LIMITS.idChars), text: prose(LIMITS.reportItemChars) }),
+);
+
+const NextStepItemSchema = z.preprocess(
+  fromString("step"),
+  z.object({
+    step: prose(LIMITS.reportItemChars),
+    reason: optionalProse(LIMITS.reportItemChars),
+    basedOn: idList,
+  }),
+);
+
+/**
+ * Model output schema for the report. A missing or empty directAnswer (or a non-object reply)
+ * fails and triggers the one repair retry; list items are parsed one by one and bad ones dropped.
+ */
+export const reportOutputSchema = z
+  .object(
+    {
+      directAnswer: z
+        .string({ error: '"directAnswer" must be a string of 3 to 5 sentences' })
+        .transform((s) => s.replace(/\s+/g, " ").trim().slice(0, LIMITS.directAnswerChars))
+        .pipe(z.string().min(1, '"directAnswer" must not be empty')),
+      keyDiscoveries: z.array(z.unknown()).nullish(),
+      planChangingConnections: z.array(z.unknown()).nullish(),
+      uncertainties: z.array(z.unknown()).nullish(),
+      nextSteps: z.array(z.unknown()).nullish(),
+    },
+    { error: 'the reply must be one JSON object with "directAnswer", "keyDiscoveries", "planChangingConnections", "uncertainties" and "nextSteps"' },
+  )
+  .transform((raw): RawReport => {
+    let malformed = 0;
+    const bad = () => {
+      malformed++;
+    };
+    const keyDiscoveries = parseItems(DiscoveryItemSchema, raw.keyDiscoveries, bad);
+    const planChangingConnections = parseItems(ConnectionTextItemSchema, raw.planChangingConnections, bad);
+    const uncertainties = parseItems(UncertaintyItemSchema, raw.uncertainties, bad);
+    const nextSteps = parseItems(NextStepItemSchema, raw.nextSteps, bad);
+    return { directAnswer: raw.directAnswer, keyDiscoveries, planChangingConnections, uncertainties, nextSteps, malformed };
+  });
