@@ -41,7 +41,7 @@ export function DiscoveryNode({ data, selected }: NodeProps<ClaimFlowNode>) {
   return (
     <div
       className={cn(
-        "flex h-full w-full flex-col justify-between rounded-xl bg-wonderland/90 px-3 py-2",
+        "discovery-arrive flex h-full w-full flex-col justify-between rounded-xl bg-wonderland/90 px-3 py-2",
         EVIDENCE_CLASS[data.evidenceStatus],
         selected && "ring-2 ring-golden ring-offset-2 ring-offset-midnight",
         data.dimmed && "opacity-40",

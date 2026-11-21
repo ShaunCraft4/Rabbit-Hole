@@ -4,12 +4,13 @@ import { createJSONStorage, persist, type StateStorage } from "zustand/middlewar
 
 import { IdSchema, InvestigationSchema, LIMITS } from "@/lib/contracts";
 import type { AnalyzeResponse, PlanResponse, ResearchResponse } from "@/lib/contracts";
-import type { BranchStatus, GapStatus, Investigation, Report } from "@/lib/types";
+import type { BranchStatus, GapStatus, Investigation, Report, RetrievalStatus } from "@/lib/types";
 
 export type Phase = "entrance" | "planning" | "researching" | "analyzed" | "reported";
 export type InvestigationView = "graph" | "list";
 
 const STORAGE_KEY = "rabbit-hole.investigation";
+const RETRIEVAL_RANK: Record<RetrievalStatus, number> = { full_text: 2, snippet_only: 1, failed: 0 };
 const PHASES: readonly Phase[] = ["entrance", "planning", "researching", "analyzed", "reported"];
 const VIEWS: readonly InvestigationView[] = ["graph", "list"];
 
@@ -29,6 +30,8 @@ interface PersistedSlice {
   branchErrors: Record<string, string>;
   dismissReasons: Record<string, string>;
   view: InvestigationView;
+  /** True when this dream was loaded from a saved file, not searched just now. */
+  savedExample: boolean;
 }
 
 interface InvestigationActions {
@@ -61,6 +64,7 @@ const initialSlice: PersistedSlice = {
   branchErrors: {},
   dismissReasons: {},
   view: "graph",
+  savedExample: false,
 };
 
 function createSafeStorage(): StateStorage {
@@ -173,6 +177,7 @@ function revive(persisted: unknown): PersistedSlice | null {
     branchErrors: { ...stringRecord(persisted.branchErrors), ...settled.errors },
     dismissReasons: stringRecord(persisted.dismissReasons),
     view: isView(persisted.view) ? persisted.view : "graph",
+    savedExample: persisted.savedExample === true,
   };
 }
 
@@ -344,7 +349,12 @@ export const useInvestigationStore = create<InvestigationState>()(
         set((state) => {
           if (!state.investigation) return state;
           const sources = new Map(state.investigation.sources.map((source) => [source.id, source]));
-          for (const source of response.sources) sources.set(source.id, source);
+          for (const source of response.sources) {
+            const current = sources.get(source.id);
+            if (!current || RETRIEVAL_RANK[source.retrievalStatus] >= RETRIEVAL_RANK[current.retrievalStatus]) {
+              sources.set(source.id, source);
+            }
+          }
           const seen = new Set(state.investigation.claims.map((claim) => claim.id));
           const claims = [...state.investigation.claims];
           for (const claim of response.claims) {
@@ -470,6 +480,7 @@ export const useInvestigationStore = create<InvestigationState>()(
           branchErrors: {},
           dismissReasons: {},
           view: "graph",
+          savedExample: true,
         });
       },
 
@@ -487,6 +498,7 @@ export const useInvestigationStore = create<InvestigationState>()(
         branchErrors: state.branchErrors,
         dismissReasons: state.dismissReasons,
         view: state.view,
+        savedExample: state.savedExample,
       }),
       merge: (persisted, current) => {
         const revived = revive(persisted);

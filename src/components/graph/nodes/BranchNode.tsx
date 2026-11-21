@@ -36,7 +36,11 @@ export function BranchNode({ data, selected }: NodeProps<BranchFlowNode>) {
     >
       <NodeHandles />
       <div className="flex items-start gap-2">
-        <DoorOpen className="mt-0.5 size-3.5 shrink-0 text-golden" aria-hidden />
+        <DoorOpen
+          data-opened={data.collapsed ? "closed" : "open"}
+          className="door-icon mt-0.5 size-3.5 shrink-0 text-golden"
+          aria-hidden
+        />
         <p className="line-clamp-2 min-w-0 flex-1 font-heading text-base leading-5 text-paper">{data.title}</p>
         <button
           type="button"

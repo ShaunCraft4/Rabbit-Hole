@@ -346,7 +346,7 @@ export function ReportDocument({ investigation, report }: { investigation: Inves
                       <span className="sr-only"> {item.source.title}</span>
                     </a>
                   ) : (
-                    <p className="text-xs text-paper/60">No page link is available.</p>
+                    <p className="text-xs text-paper/75">No page link is available.</p>
                   )}
                   <EvidenceCite item={item} />
                 </li>

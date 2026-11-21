@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
@@ -49,7 +50,12 @@ export function UnlockKeyButton() {
   if (!investigation) return null;
 
   const locked = lockMessage(investigation.branches, phase);
+  const alreadyWritten = Boolean(investigation.report) && phase === "reported";
   const disabled = Boolean(locked) || unlocking;
+
+  function openWritten() {
+    router.push("/report");
+  }
 
   async function onUnlock() {
     if (pending.current || locked) return;
@@ -61,7 +67,9 @@ export function UnlockKeyButton() {
       await runReport();
       router.push("/report");
     } catch (caught) {
-      if (mounted.current) setError(errorMessage(caught));
+      const message = errorMessage(caught);
+      if (mounted.current) setError(message);
+      toast.error(message);
     } finally {
       pending.current = false;
       if (mounted.current) setUnlocking(false);
@@ -70,6 +78,16 @@ export function UnlockKeyButton() {
 
   return (
     <div className="flex flex-col gap-2">
+      {alreadyWritten ? (
+        <Button
+          type="button"
+          size="lg"
+          className="h-11 w-full cursor-pointer text-base shadow-[0_0_24px_rgb(214_183_107/0.35)]"
+          onClick={openWritten}
+        >
+          Open the Golden Key
+        </Button>
+      ) : (
       <Tooltip open={locked ? tooltipOpen : false} onOpenChange={setTooltipOpen}>
         <TooltipTrigger asChild>
           <span className={`flex w-full ${locked ? "cursor-not-allowed" : ""}`}>
@@ -92,8 +110,11 @@ export function UnlockKeyButton() {
           </TooltipContent>
         ) : null}
       </Tooltip>
+      )}
 
-      {unlocking ? (
+      {alreadyWritten ? (
+        <p className="text-xs leading-5 text-paper/80">The Golden Key for this dream is already written.</p>
+      ) : unlocking ? (
         <p role="status" className="text-xs leading-5 text-paper/70">
           Writing the report from the verified findings. This usually takes a short while.
         </p>

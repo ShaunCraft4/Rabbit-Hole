@@ -9,6 +9,7 @@ import { cn } from "@/lib/utils";
 import type { Branch, Claim, Gap, GapKind } from "@/lib/types";
 import { useInvestigationStore } from "@/stores/investigation";
 
+import { BranchActivity, doorEmptyCopy } from "@/components/panels/BranchActivity";
 import { GAP_KIND_LABEL, evidenceBadge } from "@/components/panels/copy";
 import { useSelectNode } from "@/components/panels/use-select-node";
 
@@ -30,7 +31,6 @@ export function ListView() {
   const investigation = useInvestigationStore((state) => state.investigation);
   const selectedNodeId = useInvestigationStore((state) => state.selectedNodeId);
   const collapsedBranchIds = useInvestigationStore((state) => state.collapsedBranchIds);
-  const branchErrors = useInvestigationStore((state) => state.branchErrors);
   const toggleCollapsed = useInvestigationStore((state) => state.toggleCollapsed);
   const selectNode = useSelectNode();
 
@@ -99,11 +99,9 @@ export function ListView() {
                     kicker={`Door · ${BRANCH_STATUS[branch.status]} · ${claims.length === 1 ? "1 finding" : `${claims.length} findings`}`}
                     label={branch.title}
                   />
-                  {branchErrors[branch.id] ? (
-                    <p role="alert" className="px-3 pt-1 text-xs leading-5 break-words text-destructive">
-                      {branchErrors[branch.id]}
-                    </p>
-                  ) : null}
+                  <div className="px-3 pt-1">
+                    <BranchActivity branchId={branch.id} title={branch.title} />
+                  </div>
                 </div>
               </div>
               {isCollapsed ? null : (
@@ -118,8 +116,8 @@ export function ListView() {
                       <GapRow gap={gap} selected={selectedNodeId === gapNodeId(gap.id)} onSelect={selectNode} />
                     </li>
                   ))}
-                  {claims.length === 0 && gaps.length === 0 ? (
-                    <li className="px-3 py-1 text-sm text-paper/60">No findings yet.</li>
+                  {claims.length === 0 && gaps.length === 0 && branch.status !== "running" ? (
+                    <li className="px-3 py-1 text-sm text-paper/80">{doorEmptyCopy(branch.status)}</li>
                   ) : null}
                 </ul>
               )}
@@ -128,7 +126,7 @@ export function ListView() {
         })}
         {looseGaps.length > 0 ? (
           <li className="flex flex-col gap-1">
-            <p className="px-3 pt-2 font-mono text-[10px] tracking-[0.14em] text-paper/60 uppercase">Outside the doors</p>
+            <p className="px-3 pt-2 font-mono text-[10px] tracking-[0.14em] text-paper/75 uppercase">Outside the doors</p>
             <ul className="flex flex-col gap-1">
               {looseGaps.map((gap) => (
                 <li key={gap.id}>
@@ -195,7 +193,7 @@ function ClaimRow({
       )}
       onClick={() => onSelect(claimNodeId(claim.id))}
     >
-      <span className="font-mono text-[10px] tracking-[0.14em] text-paper/60 uppercase">
+      <span className="font-mono text-[10px] tracking-[0.14em] text-paper/75 uppercase">
         Finding · {evidenceBadge(claim.evidenceStatus)}
       </span>
       <span className="text-sm leading-5 break-words text-paper">{claim.text}</span>
@@ -225,7 +223,7 @@ function GapRow({
       )}
       onClick={() => onSelect(gapNodeId(gap.id))}
     >
-      <span className="flex items-center gap-1.5 font-mono text-[10px] tracking-[0.14em] text-mystic uppercase">
+      <span className="flex items-center gap-1.5 font-mono text-[10px] tracking-[0.14em] text-mystic-ink uppercase">
         <Icon className="size-3.5" aria-hidden />
         {GAP_KIND_LABEL[gap.kind]}
         {gap.status === "resolved" ? <span className="text-paper/60">· Resolved</span> : null}

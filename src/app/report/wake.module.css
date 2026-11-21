@@ -1,7 +1,7 @@
 .wake {
   position: relative;
   isolation: isolate;
-  animation: wake 1s ease-out both;
+  animation: wake 0.7s ease-out both;
 }
 
 .wake::before {
@@ -23,6 +23,16 @@
   }
 }
 
+.key {
+  position: absolute;
+  top: 4.5rem;
+  left: 50%;
+  z-index: 30;
+  color: #d6b76b;
+  pointer-events: none;
+  animation: key-reveal 1.35s ease-out both;
+}
+
 @keyframes glow {
   0% {
     opacity: 0;
@@ -35,13 +45,35 @@
   }
 }
 
+@keyframes key-reveal {
+  0% {
+    opacity: 0;
+    transform: translateX(-50%) translateY(18px) scale(0.84);
+  }
+  22% {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0) scale(1);
+  }
+  62% {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translateX(-50%) translateY(-10px) scale(1.04);
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .wake,
-  .wake::before {
+  .wake::before,
+  .key {
     animation: none;
   }
 
-  .wake::before {
+  .wake::before,
+  .key {
     content: none;
+    display: none;
   }
 }

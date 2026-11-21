@@ -1,3 +1,5 @@
+import { toast } from "sonner";
+
 import { ApiClientError, postAnalyze, postPlan, postReport, postResearch } from "@/lib/client/api";
 import {
   AnalyzeRequestSchema,
@@ -25,6 +27,7 @@ const researchSlot: { current: Promise<void> | null } = { current: null };
 const analyzeSlot: { current: Promise<AnalyzeResponse> | null } = { current: null };
 const gapSlot: { current: Promise<ResearchResponse> | null } = { current: null };
 const reportSlot: { current: Promise<ReportResponse> | null } = { current: null };
+const branchSlots = new Map<string, Promise<void>>();
 
 /** Page text never travels back to the server. */
 function withoutText(source: Source): Omit<Source, "text"> {
@@ -70,13 +73,56 @@ async function researchOne(branch: Branch): Promise<void> {
     const store = useInvestigationStore.getState();
     store.mergeResearch(response);
     if (response.status === "failed") {
-      store.setBranchStatus(branch.id, "failed", response.note || "This door did not open.");
+      const message = response.note || "This door did not open.";
+      store.setBranchStatus(branch.id, "failed", message);
+      toast.error(message, { id: `branch-${branch.id}` });
       return;
     }
     store.setBranchStatus(branch.id, "done");
+    if (response.status === "partial" && response.note?.trim()) {
+      toast.message(response.note, { id: `branch-${branch.id}` });
+    }
   } catch (error) {
     const message = error instanceof ApiClientError ? error.message : "This door did not open.";
     useInvestigationStore.getState().setBranchStatus(branch.id, "failed", message);
+    toast.error(message, { id: `branch-${branch.id}` });
+  }
+}
+
+/**
+ * Re-runs one failed door. Findings from the other doors stay.
+ * Analysis runs again only after this door returns something.
+ */
+export function retryBranch(branchId: string): Promise<void> {
+  const existing = branchSlots.get(branchId);
+  if (existing) return existing;
+  const run = retryBranchNow(branchId).finally(() => {
+    branchSlots.delete(branchId);
+  });
+  branchSlots.set(branchId, run);
+  return run;
+}
+
+async function retryBranchNow(branchId: string): Promise<void> {
+  const branch = useInvestigationStore.getState().investigation?.branches.find((item) => item.id === branchId);
+  if (!branch) {
+    const message = "That door is not part of this dream.";
+    toast.error(message, { id: `branch-${branchId}` });
+    throw new ApiClientError(API_ERROR_CODES.INVALID_REQUEST, message, 400);
+  }
+  useInvestigationStore.getState().setBranchStatus(branch.id, "running");
+  await researchOne(branch);
+  const status = useInvestigationStore.getState().investigation?.branches.find((item) => item.id === branchId)?.status;
+  if (status === "failed") return;
+  if (analyzeSlot.current) await analyzeSlot.current.catch(() => undefined);
+  try {
+    await runAnalyze();
+  } catch (error) {
+    const message =
+      error instanceof ApiClientError
+        ? error.message
+        : "The new findings are saved. The analysis could not be updated.";
+    toast.error(message, { id: "analyze" });
   }
 }
 

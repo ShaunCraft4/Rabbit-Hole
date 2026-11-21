@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Cormorant_Garamond, Inter, JetBrains_Mono } from "next/font/google";
 
+import { AppChrome } from "@/components/AppChrome";
 import { TooltipProvider } from "@/components/ui/tooltip";
 
 import "./globals.css";
@@ -39,7 +40,9 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       className={`dark ${cormorant.variable} ${inter.variable} ${jetbrains.variable} h-full antialiased`}
     >
       <body className="flex min-h-full flex-col font-sans">
-        <TooltipProvider delayDuration={300}>{children}</TooltipProvider>
+        <TooltipProvider delayDuration={300}>
+          <AppChrome>{children}</AppChrome>
+        </TooltipProvider>
       </body>
     </html>
   );

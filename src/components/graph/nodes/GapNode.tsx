@@ -30,6 +30,7 @@ export function GapNode({ data, selected }: NodeProps<GapFlowNode>) {
     <div
       className={cn(
         "flex h-full w-full flex-col justify-between rounded-xl border bg-wonderland/90 px-3 py-2",
+        !resolved && "cheshire-arrive",
         resolved
           ? "border-mystic/35 text-paper/70"
           : "border-mystic/80 shadow-[0_0_20px_color-mix(in_srgb,var(--mystic)_45%,transparent)]",
@@ -38,7 +39,7 @@ export function GapNode({ data, selected }: NodeProps<GapFlowNode>) {
       )}
     >
       <NodeHandles />
-      <p className={cn("flex items-center gap-1.5 font-mono text-[10px] tracking-[0.14em] uppercase", resolved ? "text-mystic/70" : "text-mystic")}>
+      <p className={cn("flex items-center gap-1.5 font-mono text-[10px] tracking-[0.14em] uppercase", resolved ? "text-paper/80" : "text-mystic-ink")}>
         <Icon className="size-3.5" aria-hidden />
         {GAP_LABEL[data.gapKind]}
         {resolved ? <span className="tracking-wide text-paper/60">· Resolved</span> : null}

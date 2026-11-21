@@ -41,6 +41,7 @@ export function WorkspaceHeader() {
           variant={view === "graph" ? "default" : "outline"}
           className="cursor-pointer"
           aria-pressed={view === "graph"}
+          aria-label="Show the investigation as a graph"
           onClick={() => setView("graph")}
         >
           Graph
@@ -51,6 +52,7 @@ export function WorkspaceHeader() {
           variant={view === "list" ? "default" : "outline"}
           className="cursor-pointer"
           aria-pressed={view === "list"}
+          aria-label="Show the investigation as a list"
           onClick={() => setView("list")}
         >
           List

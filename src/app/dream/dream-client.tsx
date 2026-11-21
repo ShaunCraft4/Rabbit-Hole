@@ -2,9 +2,11 @@
 
 import { useEffect, useState, useSyncExternalStore, type FormEvent, type ReactNode } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { toast } from "sonner";
 
 import { GraphCanvas } from "@/components/graph/GraphCanvas";
 import { ListView } from "@/components/list/ListView";
+import { BranchActivity } from "@/components/panels/BranchActivity";
 import { CheshirePanel } from "@/components/panels/CheshirePanel";
 import { DiscoveryPanel } from "@/components/panels/DiscoveryPanel";
 import { WorkspaceHeader } from "@/components/panels/WorkspaceHeader";
@@ -104,7 +106,9 @@ export function DreamWorkspace({ goldenKey }: { goldenKey: ReactNode }) {
     try {
       await runResearchAll();
     } catch (error) {
-      setFlowError(errorMessage(error));
+      const message = errorMessage(error);
+      setFlowError(message);
+      toast.error(message);
     } finally {
       setOpening(false);
     }
@@ -112,11 +116,30 @@ export function DreamWorkspace({ goldenKey }: { goldenKey: ReactNode }) {
 
   if (!hydrated || !investigation || phase === "entrance") return <DreamPending />;
 
-  if (phase === "planning") {
-    return <PlanningView opening={opening} flowError={flowError} onOpen={() => void openDoors()} />;
-  }
+  return (
+    <>
+      <ArrivalVeil />
+      {phase === "planning" ? (
+        <PlanningView opening={opening} flowError={flowError} onOpen={() => void openDoors()} />
+      ) : (
+        <WorkspaceView flowError={flowError} goldenKey={goldenKey} />
+      )}
+    </>
+  );
+}
 
-  return <WorkspaceView flowError={flowError} goldenKey={goldenKey} />;
+function ArrivalVeil() {
+  return <div className="arrival-veil" aria-hidden />;
+}
+
+function SavedExampleNote() {
+  const savedExample = useInvestigationStore((state) => state.savedExample);
+  if (!savedExample) return null;
+  return (
+    <p className="border-b border-golden/40 bg-wonderland/70 px-4 py-2 text-sm text-paper">
+      Saved example. These results were recorded earlier, not searched just now.
+    </p>
+  );
 }
 
 function StatusChip({ status }: { status: BranchStatus }) {
@@ -126,11 +149,14 @@ function StatusChip({ status }: { status: BranchStatus }) {
       : status === "failed"
         ? "border-destructive text-destructive"
         : status === "running"
-          ? "status-pulse border-mystic text-mystic"
-          : "border-paper/30 text-paper/70";
+          ? "border-mystic text-mystic-ink"
+          : "border-paper/40 text-paper";
 
   return (
     <Badge variant="outline" className={tone}>
+      {status === "running" ? (
+        <span className="status-pulse mr-1.5 inline-block size-1.5 rounded-full bg-mystic-ink" aria-hidden />
+      ) : null}
       {STATUS_LABEL[status]}
     </Badge>
   );
@@ -190,6 +216,7 @@ function PlanningView({
 
   return (
     <main className="fall-in mx-auto flex w-full max-w-3xl flex-col gap-8 px-5 py-12">
+      <SavedExampleNote />
       <header className="flex flex-col gap-3">
         <p className="font-mono text-xs tracking-[0.18em] text-golden uppercase">The White Rabbit</p>
         <h1 className="font-heading text-4xl text-paper sm:text-5xl">The plan before the fall</h1>
@@ -197,7 +224,7 @@ function PlanningView({
         {investigation.assumptions.length > 0 ? (
           <p className="text-sm leading-6 text-paper/70">{investigation.assumptions.join(" ")}</p>
         ) : (
-          <p className="text-sm text-paper/60">No assumptions yet. The doors below are the paths we will search.</p>
+          <p className="text-sm text-paper/75">No assumptions yet. The doors below are the paths we will search.</p>
         )}
       </header>
 
@@ -377,17 +404,17 @@ function PlanningView({
 
 function WorkspaceView({ flowError, goldenKey }: { flowError: string | null; goldenKey: ReactNode }) {
   const investigation = useInvestigationStore((state) => state.investigation);
-  const branchErrors = useInvestigationStore((state) => state.branchErrors);
   const selectedNodeId = useInvestigationStore((state) => state.selectedNodeId);
   const setSelected = useInvestigationStore((state) => state.setSelected);
   const view = useInvestigationStore((state) => state.view);
   if (!investigation) return null;
 
   return (
-    <div className="fall-in flex min-h-dvh flex-col lg:h-dvh">
+    <div className="flex min-h-dvh flex-col xl:h-dvh">
+      <SavedExampleNote />
       <WorkspaceHeader />
-      <div className="flex flex-1 flex-col lg:min-h-0 lg:flex-row lg:overflow-hidden">
-      <aside className="flex flex-col gap-6 border-b border-border bg-wonderland/35 p-5 lg:w-80 lg:shrink-0 lg:overflow-y-auto lg:border-r lg:border-b-0">
+      <div className="flex flex-1 flex-col xl:min-h-0 xl:flex-row xl:overflow-hidden">
+      <aside className="flex flex-col gap-6 border-b border-border bg-wonderland/35 p-5 xl:w-72 xl:shrink-0 xl:overflow-y-auto xl:border-r xl:border-b-0">
         <div className="flex flex-col gap-2">
           <p className="font-mono text-xs tracking-[0.18em] text-golden uppercase">The White Rabbit</p>
           <h1 className="font-heading text-3xl leading-snug break-words text-paper">{investigation.question}</h1>
@@ -414,11 +441,7 @@ function WorkspaceView({ flowError, goldenKey }: { flowError: string | null; gol
                   </button>
                   <StatusChip status={branch.status} />
                 </div>
-                {branchErrors[branch.id] ? (
-                  <p role="alert" className="text-xs text-destructive">
-                    {branchErrors[branch.id]}
-                  </p>
-                ) : null}
+                <BranchActivity branchId={branch.id} title={branch.title} />
               </li>
               );
             })}
@@ -436,13 +459,13 @@ function WorkspaceView({ flowError, goldenKey }: { flowError: string | null; gol
         <div className="mt-auto pt-4">{goldenKey}</div>
       </aside>
 
-      <main className="flex min-h-[50vh] min-w-0 flex-1 flex-col lg:min-h-0">
-        <div className="min-h-[50vh] flex-1 lg:min-h-0">
+      <main className="flex min-h-[50vh] min-w-0 flex-1 flex-col xl:min-h-0">
+        <div className="min-h-[50vh] flex-1 xl:min-h-0">
           {view === "list" ? <ListView /> : <GraphCanvas />}
         </div>
       </main>
 
-      <aside className="border-t border-border bg-looking-glass/25 lg:w-96 lg:shrink-0 lg:overflow-y-auto lg:border-t-0 lg:border-l">
+      <aside className="border-t border-border bg-looking-glass/25 xl:w-80 xl:shrink-0 xl:overflow-y-auto xl:border-t-0 xl:border-l">
         <DiscoveryPanel />
       </aside>
       </div>

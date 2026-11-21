@@ -1,7 +1,9 @@
 "use client";
 
-import { useRef, useState, type FormEvent, type KeyboardEvent } from "react";
+import { useEffect, useRef, useState, type FormEvent, type KeyboardEvent } from "react";
 import { useRouter } from "next/navigation";
+import { motion } from "framer-motion";
+import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -17,7 +19,7 @@ const EXAMPLES = [
   "How do I get funding to study abroad as a UCR undergraduate?",
 ] as const;
 
-const FALL_MS = 420;
+const FALL_MS = 720;
 
 function errorMessage(error: unknown, fallback: string): string {
   if (error instanceof ApiClientError) return error.message;
@@ -38,6 +40,10 @@ export default function EntrancePage() {
   const [falling, setFalling] = useState(false);
   const [working, setWorking] = useState<"plan" | "saved" | null>(null);
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    document.title = "The entrance · Rabbit Hole";
+  }, []);
 
   async function fallToDream() {
     if (motionReduced()) {
@@ -61,7 +67,9 @@ export default function EntrancePage() {
       await fallToDream();
     } catch (caught) {
       setFalling(false);
-      setError(errorMessage(caught, "The rabbit hole didn't open. Try again in a moment."));
+      const message = errorMessage(caught, "The rabbit hole didn't open. Try again in a moment.");
+      setError(message);
+      toast.error(message);
       busy.current = false;
       setWorking(null);
     }
@@ -85,15 +93,21 @@ export default function EntrancePage() {
       await fallToDream();
     } catch (caught) {
       setFalling(false);
-      setError(errorMessage(caught, "The saved example could not be opened."));
+      const message = errorMessage(caught, "The saved example could not be opened.");
+      setError(message);
+      toast.error(message);
       busy.current = false;
       setWorking(null);
     }
   }
 
   return (
-    <main
-      className={`mx-auto flex w-full max-w-2xl flex-1 flex-col justify-center gap-8 px-5 py-16 ${falling ? "fall-out" : "fall-in"}`}
+    <motion.main
+      className="mx-auto flex w-full max-w-2xl flex-1 flex-col justify-center gap-8 px-5 py-16"
+      initial={false}
+      animate={falling ? { y: "42vh", scale: 0.94, opacity: 0 } : { y: 0, scale: 1, opacity: 1 }}
+      transition={{ duration: falling ? FALL_MS / 1000 : 0, ease: [0.4, 0, 1, 1] }}
+      style={{ transformOrigin: "center top" }}
     >
       <header className="flex flex-col gap-3 text-center">
         <p className="font-mono text-xs tracking-[0.22em] text-golden uppercase">Rabbit Hole</p>
@@ -125,7 +139,7 @@ export default function EntrancePage() {
               }
             }}
           />
-          <p className="font-mono text-xs text-paper/50">
+          <p className="font-mono text-xs text-paper/75">
             {question.length} / {LIMITS.questionChars}
           </p>
         </div>
@@ -177,8 +191,8 @@ export default function EntrancePage() {
         >
           {working === "saved" ? "Opening the example…" : "Load saved dream"}
         </button>
-        <p className="text-xs text-paper/50">A saved example, not a live search.</p>
+        <p className="text-xs text-paper/75">A saved example, not a live search.</p>
       </div>
-    </main>
+    </motion.main>
   );
 }

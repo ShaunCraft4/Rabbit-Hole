@@ -13,6 +13,7 @@
   --color-midnight: #111323;
   --color-wonderland: #2a1e4d;
   --color-mystic: #6750a4;
+  --color-mystic-ink: #d7c9f6;
   --color-looking-glass: #26445b;
   --color-golden: #d6b76b;
   --color-paper: #e5e1f0;
@@ -64,6 +65,7 @@
   --midnight: #111323;
   --wonderland: #2a1e4d;
   --mystic: #6750a4;
+  --mystic-ink: #d7c9f6;
   --looking-glass: #26445b;
   --golden-key: #d6b76b;
   --paper: #e5e1f0;
@@ -138,22 +140,76 @@
 @keyframes fall-out {
   from {
     opacity: 1;
-    transform: translateY(0);
+    transform: translateY(0) scale(1);
   }
   to {
     opacity: 0;
-    transform: translateY(2.75rem);
+    transform: translateY(42vh) scale(0.94);
   }
 }
 
 @keyframes fall-in {
   from {
     opacity: 0;
-    transform: translateY(-2rem);
+    transform: translateY(-12vh);
   }
   to {
     opacity: 1;
     transform: translateY(0);
+  }
+}
+
+@keyframes arrival-veil {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+
+@keyframes door-open {
+  from {
+    transform: perspective(120px) rotateY(-78deg);
+  }
+  to {
+    transform: perspective(120px) rotateY(0deg);
+  }
+}
+
+@keyframes discovery-glow {
+  0% {
+    box-shadow: 0 0 0 0 rgb(214 183 107 / 0);
+  }
+  40% {
+    box-shadow: 0 0 22px 2px rgb(214 183 107 / 0.55);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgb(214 183 107 / 0);
+  }
+}
+
+@keyframes cheshire-grin {
+  0% {
+    opacity: 0;
+    transform: scaleX(0.2);
+  }
+  35% {
+    opacity: 1;
+    transform: scaleX(1);
+  }
+  100% {
+    opacity: 0;
+    transform: scaleX(1);
+  }
+}
+
+@keyframes search-glide {
+  0% {
+    transform: translateX(-120%);
+  }
+  100% {
+    transform: translateX(220%);
   }
 }
 
@@ -168,21 +224,99 @@
 }
 
 .fall-out {
-  animation: fall-out 420ms ease-in forwards;
+  animation: fall-out 720ms cubic-bezier(0.4, 0, 1, 1) forwards;
 }
 
 .fall-in {
-  animation: fall-in 560ms ease-out both;
+  animation: fall-in 780ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.arrival-veil {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  pointer-events: none;
+  background:
+    radial-gradient(ellipse 70% 42% at 50% 0%, rgb(214 183 107 / 0.22), transparent 62%),
+    linear-gradient(to bottom, rgb(17 19 35 / 0.45), rgb(17 19 35 / 0.05));
+  animation: arrival-veil 900ms ease-in forwards;
 }
 
 .status-pulse {
   animation: status-pulse 1.4s ease-in-out infinite;
 }
 
+.door-open,
+.door-icon[data-opened="open"] {
+  transform-origin: left center;
+  animation: door-open 700ms ease-out;
+}
+
+.discovery-arrive {
+  animation: discovery-glow 1.1s ease-out;
+}
+
+.cheshire-arrive {
+  position: relative;
+}
+
+.cheshire-arrive::after {
+  content: "";
+  position: absolute;
+  right: 14%;
+  bottom: 7px;
+  left: 14%;
+  height: 8px;
+  pointer-events: none;
+  border-bottom: 2px solid rgb(215 201 246 / 0.95);
+  border-radius: 0 0 40px 40px;
+  transform-origin: center;
+  animation: cheshire-grin 1.4s ease-out;
+}
+
+.search-glide {
+  animation: search-glide 1.1s ease-in-out infinite;
+}
+
+.react-flow__controls-button {
+  background: #2a1e4d;
+  border-bottom-color: rgb(229 225 240 / 0.24);
+  fill: #e5e1f0;
+}
+
+.react-flow__controls-button:hover {
+  background: #3a2d66;
+}
+
+.react-flow__controls-button:focus-visible {
+  outline: 2px solid #d6b76b;
+  outline-offset: 2px;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .fall-out,
   .fall-in,
-  .status-pulse {
+  .arrival-veil,
+  .status-pulse,
+  .door-open,
+  .door-icon,
+  .door-icon[data-opened="open"],
+  .discovery-arrive,
+  .cheshire-arrive::after,
+  .search-glide,
+  [data-sonner-toaster],
+  [data-sonner-toast] {
     animation: none;
+  }
+
+  .arrival-veil,
+  .cheshire-arrive::after {
+    content: none;
+    display: none;
+  }
+
+  .search-glide {
+    transform: none;
+    width: 100%;
   }
 }

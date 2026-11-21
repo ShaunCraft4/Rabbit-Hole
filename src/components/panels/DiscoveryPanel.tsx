@@ -1,16 +1,18 @@
 "use client";
 
 import { useState, type FormEvent } from "react";
+import { toast } from "sonner";
 import { Clock, Minus, Search, Split } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
 import { BrowserReadBadge } from "@/components/BrowserReadBadge";
+import { BranchActivity } from "@/components/panels/BranchActivity";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ApiClientError } from "@/lib/client/api";
 import { investigateGap } from "@/lib/client/runner";
-import { ROOT_NODE_ID, branchNodeId, claimNodeId } from "@/lib/graph/build";
+import { ROOT_NODE_ID, claimNodeId } from "@/lib/graph/build";
 import type { Branch, Claim, EvidenceStatus, Gap, GapKind, Investigation, Source } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import { useInvestigationStore } from "@/stores/investigation";
@@ -145,7 +147,7 @@ function RootDetail({ investigation }: { investigation: Investigation }) {
 function Count({ label, value }: { label: string; value: string }) {
   return (
     <div className="rounded-lg border border-paper/15 bg-midnight/30 px-3 py-2">
-      <dt className="text-xs text-paper/60">{label}</dt>
+      <dt className="text-xs text-paper/75">{label}</dt>
       <dd className="text-sm text-paper">{value}</dd>
     </div>
   );
@@ -153,7 +155,6 @@ function Count({ label, value }: { label: string; value: string }) {
 
 function BranchDetail({ investigation, branchId }: { investigation: Investigation; branchId: string }) {
   const branch = investigation.branches.find((item) => item.id === branchId);
-  const error = useInvestigationStore((state) => state.branchErrors[branchId]);
   if (!branch) return <MissingDetail />;
 
   const findings = investigation.claims.filter((claim) => claim.verified && claim.branchId === branch.id).length;
@@ -181,11 +182,7 @@ function BranchDetail({ investigation, branchId }: { investigation: Investigatio
           </ul>
         </div>
       ) : null}
-      {error ? (
-        <p role="alert" className="text-sm leading-6 break-words text-destructive">
-          {error}
-        </p>
-      ) : null}
+      <BranchActivity branchId={branch.id} title={branch.title} />
     </div>
   );
 }
@@ -265,7 +262,7 @@ function SourceCard({ source }: { source: Source }) {
           <span className="sr-only"> {source.title}</span>
         </a>
       ) : (
-        <p className="text-xs text-paper/60">No page link is available.</p>
+        <p className="text-xs text-paper/75">No page link is available.</p>
       )}
     </article>
   );
@@ -317,11 +314,14 @@ function GapBody({ gap }: { gap: Gap }) {
         setBranchStatus(response.branchId, failed ? "failed" : "done", failed ? response.note : undefined);
       }
       if (failed && fresh.length === 0) {
-        setFollowUpError(response.note?.trim() || "This search did not return new findings.");
+        const message = response.note?.trim() || "This search did not return new findings.";
+        setFollowUpError(message);
+        toast.error(message);
       }
     } catch (error) {
       const message = error instanceof ApiClientError ? error.message : "This gap could not be investigated.";
       setFollowUpError(message);
+      toast.error(message);
       if (!existed) {
         const branch = useInvestigationStore.getState().investigation?.branches.find((item) => item.id === branchId);
         if (branch) setBranchStatus(branch.id, "failed", message);
@@ -345,7 +345,7 @@ function GapBody({ gap }: { gap: Gap }) {
 
   return (
     <div className="flex flex-col gap-4">
-      <p className="flex items-center gap-1.5 font-mono text-xs tracking-[0.14em] text-mystic uppercase">
+      <p className="flex items-center gap-1.5 font-mono text-xs tracking-[0.14em] text-mystic-ink uppercase">
         <Icon className="size-3.5" aria-hidden />
         {GAP_KIND_LABEL[gap.kind]}
         {gap.status === "resolved" ? <span className="text-paper/60">· Resolved</span> : null}

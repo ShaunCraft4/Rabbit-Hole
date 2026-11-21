@@ -51,7 +51,7 @@ export function CheshirePanel() {
                     aria-current={selected ? "true" : undefined}
                     onClick={() => selectNode(nodeId)}
                   >
-                    <span className="flex items-center gap-1.5 font-mono text-[10px] tracking-[0.14em] text-mystic uppercase">
+                    <span className="flex items-center gap-1.5 font-mono text-[10px] tracking-[0.14em] text-mystic-ink uppercase">
                       <Icon className="size-3.5" aria-hidden />
                       {GAP_KIND_LABEL[gap.kind]}
                     </span>

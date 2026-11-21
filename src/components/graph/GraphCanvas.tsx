@@ -146,6 +146,12 @@ function GraphView() {
   }, []);
 
   const doorsOpening = model.verifiedClaims === 0 && model.running;
+  const settledQuiet =
+    investigation !== null &&
+    !model.running &&
+    model.verifiedClaims === 0 &&
+    investigation.branches.length > 0 &&
+    investigation.branches.every((branch) => branch.status === "done" || branch.status === "failed");
   const gapsDisabled = model.gapCount === 0 || model.verifiedClaims === 0;
 
   return (
@@ -203,6 +209,11 @@ function GraphView() {
           aria-live="polite"
         >
           The doors are opening…
+        </p>
+      ) : null}
+      {settledQuiet ? (
+        <p className="pointer-events-none absolute bottom-6 left-1/2 z-10 max-w-sm -translate-x-1/2 px-4 text-center text-sm text-paper/85">
+          No verified findings yet. A door that failed can be retried on its own. Everything that succeeded stays.
         </p>
       ) : null}
     </section>
