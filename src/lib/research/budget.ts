@@ -51,6 +51,31 @@ export const PIPELINE = {
   minBackfillMs: 2_500,
 } as const;
 
+/** Solari cloud-browser fallback (docs/BLUEPRINT.md section 30). */
+export const SOLARI = {
+  /** Browsers open at once across the whole server (the Free plan allows 3). */
+  concurrency: 3,
+  /** Browser fallbacks per branch, at most. */
+  maxPerBranch: 2,
+  /** A source with less text than this (or failed / snippet_only) is worth a browser attempt,
+   *  and a browser read must return at least this much to be used. */
+  minTextChars: 500,
+  /** Hard limit for one browser read, from launch to close. */
+  overallTimeoutMs: 20_000,
+  /** page.goto navigation timeout. */
+  navigationTimeoutMs: 15_000,
+  /** Pause after the page has loaded, for late client-side rendering. */
+  settleMs: 1_000,
+  /** Raw page text kept from the browser, before relevance trimming. */
+  maxTextChars: 20_000,
+  /** Server-side auto-release for every session (the gateway minimum): a backstop if a close is ever lost. */
+  sessionTimeoutMs: 60_000,
+  /** Per-request HTTP timeout for the session-create call. */
+  apiTimeoutMs: 10_000,
+  /** Skip the browser stage when less than this is left of its budget. */
+  minStageMs: 4_000,
+} as const;
+
 /** Keenable HTTP client limits. */
 export const KEENABLE = {
   /** Per-request timeout. */

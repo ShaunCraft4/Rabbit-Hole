@@ -9,6 +9,8 @@
  *    could span words that never appear together on the page.
  * 2. The search hit's stitched text, with every passage boundary marked -> "snippet_only".
  * 3. Nothing readable -> "failed" (the source is kept, never claimed as read).
+ * 4. Afterwards, for at most 2 weak sources per branch (the pipeline decides), retrieveWithBrowser
+ *    re-reads the page with a Solari cloud browser -> "full_text", retrievedVia "browser" (solari.ts).
  *
  * Fetch response (verified): { url, title, content, description, published_at?, truncated, total_chars }.
  * Unreadable pages return a JSON error with type "target_error" (e.g. code "page_not_found").
@@ -17,10 +19,11 @@ import { z } from "zod";
 
 import type { Source } from "@/lib/types";
 
-import { BUDGET, KEENABLE, RETRIEVAL } from "./budget";
-import { domainOf, sourceIdFromUrl } from "./dedupe";
+import { BUDGET, KEENABLE, RETRIEVAL, SOLARI } from "./budget";
+import { classifyDomain, domainOf, sourceIdFromUrl } from "./dedupe";
 import { keenableRequest, KeenableError } from "./keenable";
 import type { SearchHit } from "./search";
+import { isBrowserReadable, isSolariEnabled, readWithBrowser } from "./solari";
 import { cleanMarkdown, displaySnippet, selectPassages, selectStitchedPassages } from "./text";
 
 export interface RetrieveOptions {
@@ -137,4 +140,51 @@ export async function retrieveSource(hit: SearchHit, opts: RetrieveOptions = {})
   } catch (err) {
     return { source: base, text: "", note: `unexpected: ${(err as Error).message}` };
   }
+}
+
+// ---------------------------------------------------------------------------
+// Browser fallback (Solari, docs/BLUEPRINT.md section 30)
+// ---------------------------------------------------------------------------
+
+/**
+ * True when a retrieved source is worth a browser attempt: Keenable left it failed, snippet-only or
+ * with under SOLARI.minTextChars of text, the URL is an http(s) web page (not a PDF), and
+ * SOLARI_API_KEY is set. Social and forum sites are skipped: a plain browser only gets their login
+ * wall, and they are experience, not proof. The caller decides how many attempts a branch gets.
+ */
+export function needsBrowserFallback(r: RetrievedSource): boolean {
+  const weak = r.source.retrievalStatus !== "full_text" || r.text.length < SOLARI.minTextChars;
+  return (
+    weak &&
+    isBrowserReadable(r.source.url) &&
+    classifyDomain(r.source.url).kind !== "forum" &&
+    isSolariEnabled()
+  );
+}
+
+/**
+ * Re-reads a weak source with a cloud browser. If the browser returns at least SOLARI.minTextChars,
+ * the source becomes full_text with retrievedVia "browser", and its text goes through the same
+ * relevance trimming as any other page (claims are verified against exactly this text).
+ * Otherwise the source comes back unchanged. Never throws.
+ */
+export async function retrieveWithBrowser(prior: RetrievedSource, opts: RetrieveOptions = {}): Promise<RetrievedSource> {
+  const page = await readWithBrowser(prior.source.url, { signal: opts.signal });
+  const why = prior.note ?? (prior.source.retrievalStatus === "full_text" ? "Keenable text was short" : prior.source.retrievalStatus);
+  if (!page || page.text.length < SOLARI.minTextChars) {
+    return { ...prior, note: `${why}; browser: ${page ? `only ${page.text.length} characters` : "not read"}` };
+  }
+  const { source } = prior;
+  return {
+    source: {
+      ...source,
+      // Search titles are usually better than <title>; use the page's when we only had the domain.
+      title: (source.title === source.domain && page.title) || source.title,
+      snippet: source.snippet || displaySnippet(page.text, RETRIEVAL.displaySnippetChars),
+      retrievalStatus: "full_text",
+      retrievedVia: "browser",
+    },
+    text: selectPassages(page.text, opts.focus ?? source.title, opts.maxChars ?? BUDGET.sourceTextChars),
+    note: `read with a cloud browser (${why})`,
+  };
 }

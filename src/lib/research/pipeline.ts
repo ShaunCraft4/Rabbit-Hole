@@ -24,10 +24,16 @@ import {
 } from "@/lib/contracts";
 import type { Claim, Source } from "@/lib/types";
 
-import { BUDGET, PIPELINE } from "./budget";
+import { BUDGET, PIPELINE, SOLARI } from "./budget";
 import { dedupeHits, rankHits, sourceIdFromUrl } from "./dedupe";
 import { KeenableError } from "./keenable";
-import { retrieveSource, type RetrievedSource, type RetrieveOptions } from "./retrieve";
+import {
+  needsBrowserFallback,
+  retrieveSource,
+  retrieveWithBrowser,
+  type RetrievedSource,
+  type RetrieveOptions,
+} from "./retrieve";
 import { searchWeb, type SearchHit, type SearchOptions } from "./search";
 import { normalizeForMatch, verifyExcerpt } from "./verify";
 
@@ -205,10 +211,43 @@ export function claimIdPrefix(branchId: string, followUp: boolean): string {
 export interface PipelineDeps {
   search: (query: string, opts: SearchOptions) => Promise<SearchHit[]>;
   retrieve: (hit: SearchHit, opts: RetrieveOptions) => Promise<RetrievedSource>;
+  /** Browser fallback for a weak retrieved source (Solari). */
+  browse: (prior: RetrievedSource, opts: RetrieveOptions) => Promise<RetrievedSource>;
   extract: typeof extractClaims;
 }
 
-const DEFAULT_DEPS: PipelineDeps = { search: searchWeb, retrieve: retrieveSource, extract: extractClaims };
+const DEFAULT_DEPS: PipelineDeps = {
+  search: searchWeb,
+  retrieve: retrieveSource,
+  browse: retrieveWithBrowser,
+  extract: extractClaims,
+};
+
+/**
+ * Test seam: the top-ranked page skips Keenable and comes back "failed", as if Keenable could not
+ * read it, so the browser fallback has to read it. Used by the dev-only "#browser" hook and tests.
+ */
+export function skipKeenableForTopPage(note = "Keenable skipped on purpose (test)"): Pick<PipelineDeps, "retrieve"> {
+  let skipped = false;
+  return {
+    retrieve: (hit, opts) => {
+      if (skipped) return retrieveSource(hit, opts);
+      skipped = true;
+      return Promise.resolve({
+        source: {
+          id: sourceIdFromUrl(hit.url),
+          url: hit.url,
+          domain: hit.domain,
+          title: hit.title || hit.domain,
+          retrievalStatus: "failed",
+          ...(hit.snippet ? { snippet: hit.snippet } : {}),
+        },
+        text: "",
+        note,
+      });
+    },
+  };
+}
 
 export interface ResearchOptions {
   /** Aborts the run (for example when the client disconnects). */
@@ -219,7 +258,7 @@ export interface ResearchOptions {
   timeLimitMs?: number;
 }
 
-type Stage = "search" | "retrieve" | "extract" | "verify";
+type Stage = "search" | "retrieve" | "browser" | "extract" | "verify";
 
 export interface ResearchStats {
   status: ResearchStatus;
@@ -228,6 +267,9 @@ export interface ResearchStats {
   totalMs: number;
   searchMs: number;
   retrieveMs: number;
+  browserMs: number;
+  /** Browser fallbacks attempted and how many turned a weak source into full text. */
+  browser: { tried: number; read: number; skippedForTime: number };
   extractMs: number;
   queries: number;
   failedQueries: number;
@@ -273,6 +315,7 @@ interface RunContext {
 const STAGE_LABEL: Record<Stage, string> = {
   search: "searching",
   retrieve: "reading pages",
+  browser: "reading pages with a cloud browser",
   extract: "extracting claims",
   verify: "checking quotes",
 };
@@ -367,7 +410,7 @@ async function runStages(ctx: RunContext): Promise<ResearchRun> {
   const focus = [branch.question, ...queries].join(" ");
   const retrieveEnds = Date.now() + clampMs(PIPELINE.retrieveMaxMs, ctx.remaining() - PIPELINE.extractReserveMs, 1_500);
   const retrieveSignal = AbortSignal.any([ctx.signal, AbortSignal.timeout(clampMs(retrieveEnds - Date.now()))]);
-  const texts = new Map<string, { text: string; retrievalStatus: ReadableStatus }>();
+  const retrieved: RetrievedSource[] = [];
 
   const retrieveAll = async (hits: SearchHit[]) => {
     const results = await Promise.all(
@@ -377,14 +420,8 @@ async function runStages(ctx: RunContext): Promise<ResearchRun> {
           .catch((err: unknown) => failedRetrieval(hit, err)),
       ),
     );
-    for (const r of results) {
-      ctx.sources.push(r.source);
-      const status = r.source.retrievalStatus;
-      if (status !== "failed" && r.text) texts.set(r.source.id, { text: r.text, retrievalStatus: status });
-      if (status !== "full_text") {
-        stats.sourceNotes.push({ sourceId: r.source.id, domain: r.source.domain, status, note: r.note ?? "" });
-      }
-    }
+    retrieved.push(...results);
+    ctx.sources = retrieved.map((r) => r.source);
     return results;
   };
 
@@ -396,6 +433,44 @@ async function runStages(ctx: RunContext): Promise<ResearchRun> {
     await retrieveAll(backfill);
   }
   stats.retrieveMs = Date.now() - t;
+
+  // 3b. Browser fallback (Solari): re-read at most SOLARI.maxPerBranch weak pages (failed, snippet-only
+  //     or very short) with a cloud browser, best-ranked first. Skipped silently without SOLARI_API_KEY.
+  const weak = retrieved
+    .map((r, i) => ({ r, i }))
+    .filter(({ r }) => needsBrowserFallback(r))
+    .slice(0, SOLARI.maxPerBranch);
+  if (weak.length > 0) {
+    const budget = Math.min(SOLARI.overallTimeoutMs, ctx.remaining() - PIPELINE.extractReserveMs);
+    if (budget < SOLARI.minStageMs) {
+      stats.browser.skippedForTime = weak.length;
+    } else {
+      ctx.stage = "browser";
+      t = Date.now();
+      const browserSignal = AbortSignal.any([ctx.signal, AbortSignal.timeout(budget)]);
+      const reread = await Promise.all(
+        weak.map(({ r }) =>
+          deps.browse(r, { focus, maxChars: BUDGET.sourceTextChars, signal: browserSignal }).catch(() => r),
+        ),
+      );
+      reread.forEach((r, k) => {
+        retrieved[weak[k].i] = r;
+      });
+      ctx.sources = retrieved.map((r) => r.source);
+      stats.browserMs = Date.now() - t;
+      stats.browser.tried = weak.length;
+      stats.browser.read = reread.filter((r) => r.source.retrievedVia === "browser").length;
+    }
+  }
+
+  const texts = new Map<string, { text: string; retrievalStatus: ReadableStatus }>();
+  for (const r of retrieved) {
+    const status = r.source.retrievalStatus;
+    if (status !== "failed" && r.text) texts.set(r.source.id, { text: r.text, retrievalStatus: status });
+    if (status !== "full_text" || r.source.retrievedVia === "browser") {
+      stats.sourceNotes.push({ sourceId: r.source.id, domain: r.source.domain, status, note: r.note ?? "" });
+    }
+  }
   stats.retrieved = countRetrieval(ctx.sources);
 
   const readable = ctx.sources.filter((s) => texts.has(s.id));
@@ -474,6 +549,8 @@ function emptyStats(): ResearchStats {
     totalMs: 0,
     searchMs: 0,
     retrieveMs: 0,
+    browserMs: 0,
+    browser: { tried: 0, read: 0, skippedForTime: 0 },
     extractMs: 0,
     queries: 0,
     failedQueries: 0,
@@ -541,8 +618,11 @@ function llmFailureNote(err: LLMError): string {
 
 function coverageNote(stats: ResearchStats): string | undefined {
   const { full, snippet, failed } = stats.retrieved;
-  if (snippet === 0 && failed === 0) return undefined;
-  const parts = [`Read ${full} of ${full + snippet + failed} pages in full`];
+  const byBrowser = stats.browser.read;
+  if (snippet === 0 && failed === 0 && byBrowser === 0) return undefined;
+  const parts = [
+    `Read ${full} of ${full + snippet + failed} pages in full${byBrowser ? ` (${byBrowser} with a cloud browser)` : ""}`,
+  ];
   if (snippet) parts.push(`${snippet} only from search snippets`);
   if (failed) parts.push(`${failed} could not be opened`);
   return `${parts.join("; ")}.`;
@@ -603,6 +683,8 @@ function logRun(ctx: RunContext, run: ResearchRun): void {
     `[research] ${ctx.req.branch.id}${gap} ${s.status}${s.stoppedAt ? ` at ${s.stoppedAt}` : ""} in ${sec(s.totalMs)}` +
       ` | search ${sec(s.searchMs)}: ${s.queries} q${s.failedQueries ? ` (${s.failedQueries} failed)` : ""}, ${s.hits} hits, ${s.unique} unique, ${s.excluded} excluded` +
       ` | retrieve ${sec(s.retrieveMs)}: ${s.retrieved.full} full, ${s.retrieved.snippet} snippet, ${s.retrieved.failed} failed` +
+      (s.browser.tried ? ` | browser ${sec(s.browserMs)}: ${s.browser.read} of ${s.browser.tried} read` : "") +
+      (s.browser.skippedForTime ? ` | browser skipped (no time) for ${s.browser.skippedForTime}` : "") +
       ` | extract ${sec(s.extractMs)}: ${s.extracted} claims${s.malformed ? `, ${s.malformed} malformed` : ""}` +
       ` | verify: ${s.kept} kept, ${s.rejected} rejected${s.duplicates ? `, ${s.duplicates} duplicate` : ""}${s.overCap ? `, ${s.overCap} over cap` : ""}`,
   );

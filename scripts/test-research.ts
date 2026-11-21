@@ -8,14 +8,19 @@
  *                                                in-process: the best page is made unreachable; the
  *                                                branch must still return claims and keep the failed source
  *   npx tsx scripts/test-research.ts --injection  in-process: a page that tries to give the extractor orders
+ *   npx tsx scripts/test-research.ts --browser-fallback
+ *                                                in-process: Keenable is skipped for the best page; with
+ *                                                SOLARI_API_KEY the cloud browser must read it and produce
+ *                                                verified claims; without the key nothing changes
  *
  * In-process modes read .env.local themselves.
  */
 import { extractClaims } from "@/lib/ai/extract";
 import { ResearchResponseSchema, type PlanBranch, type ResearchResponse } from "@/lib/contracts";
 import { sourceIdFromUrl } from "@/lib/research/dedupe";
-import { buildVerifiedClaims, researchBranch, type ResearchStats } from "@/lib/research/pipeline";
+import { buildVerifiedClaims, researchBranch, skipKeenableForTopPage, type ResearchStats } from "@/lib/research/pipeline";
 import { retrieveSource } from "@/lib/research/retrieve";
+import { closeSolari, countActiveSessions } from "@/lib/research/solari";
 
 const args = process.argv.slice(2);
 const flag = (name: string) => args.includes(name);
@@ -230,8 +235,52 @@ async function injection() {
   check(verified.claims.length >= 1, `the real facts were still extracted (${verified.claims.length} verified)`);
 }
 
+async function browserFallback() {
+  loadEnv();
+  const key = process.env.SOLARI_API_KEY;
+  if (!key) throw new Error("SOLARI_API_KEY must be set in .env.local for this test");
+  const branch = BRANCHES[0];
+
+  console.log("== With SOLARI_API_KEY: Keenable is skipped for the top page");
+  let started = Date.now();
+  const on = await researchBranch({ branch }, { deps: skipKeenableForTopPage() });
+  const onMs = Date.now() - started;
+  const onResponse = checkResponse("browser on", JSON.parse(JSON.stringify(on.response)), branch.id);
+  if (onResponse) {
+    printResponse(onResponse, onMs, on.stats);
+    const top = onResponse.sources[0];
+    console.log(`   browser stage: ${(on.stats.browserMs / 1000).toFixed(1)}s, ${on.stats.browser.read} of ${on.stats.browser.tried} read`);
+    check(top?.retrievalStatus === "full_text" && top.retrievedVia === "browser", `the skipped page (${top?.domain}) was read by the browser: full_text, retrievedVia "browser"`);
+    const fromBrowser = onResponse.claims.filter((c) => c.sourceId === top?.id);
+    check(fromBrowser.length > 0, `verified claims cite the browser-read page (${fromBrowser.length})`);
+    check(
+      onResponse.sources.filter((s) => s.retrievedVia === "browser").length <= 2,
+      "at most 2 browser fallbacks in the branch",
+    );
+    for (const c of fromBrowser.slice(0, 2)) console.log(`   browser claim: ${c.text}\n     quote: "${c.excerpt}"`);
+  }
+  await new Promise((r) => setTimeout(r, 1500));
+  const active = await countActiveSessions();
+  check(active === 0, `no Solari session left active (${active ?? "unknown"})`);
+  await closeSolari();
+
+  console.log("\n== Without SOLARI_API_KEY: same forced failure");
+  delete process.env.SOLARI_API_KEY;
+  started = Date.now();
+  const off = await researchBranch({ branch }, { deps: skipKeenableForTopPage() });
+  const offResponse = checkResponse("browser off", JSON.parse(JSON.stringify(off.response)), branch.id);
+  if (offResponse) {
+    printResponse(offResponse, Date.now() - started, off.stats);
+    check(offResponse.sources[0]?.retrievalStatus === "failed" && !offResponse.sources[0]?.retrievedVia, "the skipped page stays failed (no fallback)");
+    check(offResponse.sources.every((s) => s.retrievedVia !== "browser") && off.stats.browser.tried === 0, "no browser was used");
+    check(offResponse.claims.length > 0, "the branch still returns verified claims from the other pages");
+  }
+  process.env.SOLARI_API_KEY = key;
+}
+
 async function main() {
-  if (flag("--failed-source")) await failedSource();
+  if (flag("--browser-fallback")) await browserFallback();
+  else if (flag("--failed-source")) await failedSource();
   else if (flag("--injection")) await injection();
   else if (flag("--direct")) await direct();
   else await viaHttp();
