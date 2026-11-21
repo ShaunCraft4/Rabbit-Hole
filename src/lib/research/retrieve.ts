@@ -117,8 +117,9 @@ export async function retrieveSource(hit: SearchHit, opts: RetrieveOptions = {})
       }
       note = `fetch returned only ${page.text.length} characters`;
     } catch (err) {
-      if (opts.signal?.aborted) return { source: base, text: "", note: "aborted" };
-      note = `fetch failed: ${describe(err)}`;
+      // A fetch cut off by the time limit still falls through to the snippet below:
+      // that text is already in memory and needs no network.
+      note = opts.signal?.aborted ? "fetch stopped at the time limit" : `fetch failed: ${describe(err)}`;
     }
 
     // 2. Search snippet (stitched passages): honest fallback, labeled snippet_only.

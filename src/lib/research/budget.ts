@@ -27,16 +27,42 @@ export const BUDGET = {
   searchConcurrency: 2,
 } as const;
 
+/**
+ * How /api/research splits its BUDGET.branchTimeLimitMs between stages.
+ * The route always answers before the limit, with whatever finished ("partial" if cut short).
+ */
+export const PIPELINE = {
+  /** Kept free at the end of the limit to build and send the response. */
+  replyMarginMs: 1_000,
+  /** Longest the search stage may take (slow queries are abandoned; finished ones are kept). */
+  searchMaxMs: 15_000,
+  /**
+   * Longest the retrieval stage may take, including backfill. Most fetches take under 2 s; a slow
+   * page past this falls back to its search snippet (snippet_only) instead of holding up the branch.
+   */
+  retrieveMaxMs: 8_000,
+  /** Time reserved for the extraction call when deciding how long retrieval may run. */
+  extractReserveMs: 16_000,
+  /** Skip extraction (and return "partial") when less than this remains. */
+  minExtractMs: 4_000,
+  /** Extra candidates retrieved to replace pages that failed, at most. */
+  maxBackfill: 2,
+  /** Only backfill if at least this much of the retrieval budget is left. */
+  minBackfillMs: 2_500,
+} as const;
+
 /** Keenable HTTP client limits. */
 export const KEENABLE = {
   /** Per-request timeout. */
   timeoutMs: 15_000,
   /**
    * Minimum gap between request starts in this process. Keyless calls are limited to
-   * 10 requests per second and 1,000 per hour per IP; a key raises the limits.
+   * 10 requests per second and 1,000 per hour per IP. With a key the limit is STILL 10 requests
+   * per second per organization (verified 2026-11-21: a 12-request burst at 50 ms spacing got 429s),
+   * so keyed calls are spaced just under that too.
    */
   minIntervalMsKeyless: 120,
-  minIntervalMsKeyed: 50,
+  minIntervalMsKeyed: 110,
   /** Longest Retry-After we are willing to wait for the single 429 retry. */
   maxRetryWaitMs: 3_000,
   /** Characters requested from /v1/fetch (we trim to sourceTextChars afterwards). */

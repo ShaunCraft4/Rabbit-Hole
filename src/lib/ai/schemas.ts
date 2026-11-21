@@ -103,3 +103,103 @@ export function planOutputSchema(question: string) {
     return { goal: raw.goal, assumptions, branches: chosen.slice(0, PLAN_MAX_BRANCHES) };
   }).pipe(PlanCheckedSchema);
 }
+
+// ---------------------------------------------------------------------------
+// 2. EXTRACT
+// ---------------------------------------------------------------------------
+
+export const CLAIM_TYPES = ["requirement", "deadline", "amount", "process", "contact", "other"] as const;
+export type ClaimType = (typeof CLAIM_TYPES)[number];
+
+/** One claim as the extractor returned it, before verification and id assignment. */
+export interface ExtractedClaim {
+  sourceId: string;
+  excerpt: string;
+  text: string;
+  claimType: ClaimType;
+  dateMentioned?: string;
+}
+
+export interface ExtractOutput {
+  claims: ExtractedClaim[];
+  /** Items dropped because they were missing a field or broke a limit (counted as rejected). */
+  malformed: number;
+}
+
+/** Most items the model may return; anything beyond is ignored (the branch keeps 8 at most). */
+const EXTRACT_MAX_ITEMS = 40;
+
+const QUOTE_CHARS = `"'“”‘’«»`;
+const WRAPPING_QUOTES = new RegExp(`^[${QUOTE_CHARS}]([\\s\\S]*)[${QUOTE_CHARS}]$`);
+
+/**
+ * Undoes harmless decoration the model adds around a quote: wrapping quotation marks and a
+ * leading or trailing ellipsis. What remains is a contiguous piece of what the model wrote, so
+ * if it then verifies, those exact words really are on the page. Ellipses INSIDE the quote are
+ * left alone, so a stitched quote still fails verification.
+ */
+function cleanExcerpt(raw: string): string {
+  let s = raw.trim();
+  for (let i = 0; i < 3; i++) {
+    const before = s;
+    const wrapped = s.match(WRAPPING_QUOTES);
+    if (wrapped) s = wrapped[1].trim();
+    s = s
+      .replace(/^(\.{3}|…)\s*/, "")
+      .replace(/\s*(\.{3}|…)$/, "")
+      .trim();
+    if (s === before) break;
+  }
+  return s;
+}
+
+const NO_DATE = new Set(["", "none", "n/a", "na", "null", "not mentioned", "unknown", "not specified"]);
+
+const ExtractItemSchema = z.object({
+  sourceId: z.string().trim().min(1).max(LIMITS.idChars),
+  excerpt: z.string().transform(cleanExcerpt).pipe(z.string().min(1).max(LIMITS.excerptChars)),
+  text: z.string().trim().min(1).max(LIMITS.claimTextChars),
+  claimType: z
+    .string()
+    .nullish()
+    .transform((t): ClaimType => {
+      const v = (t ?? "").trim().toLowerCase();
+      return (CLAIM_TYPES as readonly string[]).includes(v) ? (v as ClaimType) : "other";
+    }),
+  dateMentioned: z
+    .union([z.string(), z.number()])
+    .nullish()
+    .transform((d) => {
+      const v = d === null || d === undefined ? "" : String(d).trim();
+      return NO_DATE.has(v.toLowerCase()) || v.length > LIMITS.dateChars ? undefined : v;
+    }),
+});
+
+/**
+ * Model output schema for extraction. Only the top-level shape can fail (which triggers the
+ * one repair retry); each claim is parsed on its own, and a bad item is counted and dropped
+ * instead of throwing away the whole reply.
+ */
+export const extractOutputSchema = z.preprocess(
+  (v) => (Array.isArray(v) ? { claims: v } : v),
+  z
+    .object({
+      claims: z.array(z.unknown(), {
+        error: 'the reply must be an object with a "claims" array (use [] when nothing is relevant)',
+      }),
+    })
+    .transform((raw): ExtractOutput => {
+      const claims: ExtractedClaim[] = [];
+      let malformed = 0;
+      for (const item of raw.claims.slice(0, EXTRACT_MAX_ITEMS)) {
+        const parsed = ExtractItemSchema.safeParse(item);
+        if (!parsed.success) {
+          malformed++;
+          continue;
+        }
+        const { dateMentioned, ...rest } = parsed.data;
+        claims.push(dateMentioned ? { ...rest, dateMentioned } : rest);
+      }
+      return { claims, malformed };
+    }),
+);

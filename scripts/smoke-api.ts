@@ -190,7 +190,7 @@ async function main() {
     sources: [{ ...reportReq.sources[0], text: "server-only page text" }],
   });
   if (process.env.SMOKE_SKIP_FAIL !== "1") {
-    await expectError("research: #fail branch (stub only)", 502, API_ROUTES.research, {
+    await expectError("research: #fail branch (dev-only test hook)", 502, API_ROUTES.research, {
       branch: { id: "fail-test", title: "Forced #fail", question: "q", queries: ["q"] },
     });
   }
