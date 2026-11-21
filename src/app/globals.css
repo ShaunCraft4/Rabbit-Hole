@@ -7,9 +7,15 @@
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-sans);
-  --font-mono: var(--font-geist-mono);
-  --font-heading: var(--font-sans);
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-jetbrains), ui-monospace, monospace;
+  --font-heading: var(--font-cormorant), Georgia, "Times New Roman", serif;
+  --color-midnight: #111323;
+  --color-wonderland: #2a1e4d;
+  --color-mystic: #6750a4;
+  --color-looking-glass: #26445b;
+  --color-golden: #d6b76b;
+  --color-paper: #e5e1f0;
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
@@ -48,83 +54,135 @@
   --radius-4xl: calc(var(--radius) * 2.6);
 }
 
-:root {
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.145 0 0);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.145 0 0);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.205 0 0);
-  --primary-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.97 0 0);
-  --secondary-foreground: oklch(0.205 0 0);
-  --muted: oklch(0.97 0 0);
-  --muted-foreground: oklch(0.556 0 0);
-  --accent: oklch(0.97 0 0);
-  --accent-foreground: oklch(0.205 0 0);
-  --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.922 0 0);
-  --input: oklch(0.922 0 0);
-  --ring: oklch(0.708 0 0);
-  --chart-1: oklch(0.87 0 0);
-  --chart-2: oklch(0.556 0 0);
-  --chart-3: oklch(0.439 0 0);
-  --chart-4: oklch(0.371 0 0);
-  --chart-5: oklch(0.269 0 0);
-  --radius: 0.625rem;
-  --sidebar: oklch(0.985 0 0);
-  --sidebar-foreground: oklch(0.145 0 0);
-  --sidebar-primary: oklch(0.205 0 0);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.97 0 0);
-  --sidebar-accent-foreground: oklch(0.205 0 0);
-  --sidebar-border: oklch(0.922 0 0);
-  --sidebar-ring: oklch(0.708 0 0);
-}
-
+/*
+ * Dark-only palette (BLUEPRINT section 15).
+ * Midnight, Wonderland Purple, Mystic Violet, Looking Glass Blue, Golden Key, Paper.
+ * :root and .dark match so the page is dark even before the html class is applied.
+ */
+:root,
 .dark {
-  --background: oklch(0.145 0 0);
-  --foreground: oklch(0.985 0 0);
-  --card: oklch(0.205 0 0);
-  --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.205 0 0);
-  --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.922 0 0);
-  --primary-foreground: oklch(0.205 0 0);
-  --secondary: oklch(0.269 0 0);
-  --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.269 0 0);
-  --muted-foreground: oklch(0.708 0 0);
-  --accent: oklch(0.269 0 0);
-  --accent-foreground: oklch(0.985 0 0);
-  --destructive: oklch(0.704 0.191 22.216);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.556 0 0);
-  --chart-1: oklch(0.87 0 0);
-  --chart-2: oklch(0.556 0 0);
-  --chart-3: oklch(0.439 0 0);
-  --chart-4: oklch(0.371 0 0);
-  --chart-5: oklch(0.269 0 0);
-  --sidebar: oklch(0.205 0 0);
-  --sidebar-foreground: oklch(0.985 0 0);
-  --sidebar-primary: oklch(0.488 0.243 264.376);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.269 0 0);
-  --sidebar-accent-foreground: oklch(0.985 0 0);
-  --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.556 0 0);
+  --midnight: #111323;
+  --wonderland: #2a1e4d;
+  --mystic: #6750a4;
+  --looking-glass: #26445b;
+  --golden-key: #d6b76b;
+  --paper: #e5e1f0;
+  --background: #111323;
+  --foreground: #e5e1f0;
+  --card: #2a1e4d;
+  --card-foreground: #e5e1f0;
+  --popover: #221a3d;
+  --popover-foreground: #e5e1f0;
+  --primary: #d6b76b;
+  --primary-foreground: #111323;
+  --secondary: #26445b;
+  --secondary-foreground: #e5e1f0;
+  --muted: #2a1e4d;
+  --muted-foreground: #c8c2da;
+  --accent: #6750a4;
+  --accent-foreground: #e5e1f0;
+  --destructive: #e7a0a0;
+  --border: color-mix(in srgb, #e5e1f0 16%, transparent);
+  --input: color-mix(in srgb, #e5e1f0 20%, transparent);
+  --ring: #d6b76b;
+  --chart-1: #d6b76b;
+  --chart-2: #6750a4;
+  --chart-3: #26445b;
+  --chart-4: #e5e1f0;
+  --chart-5: #2a1e4d;
+  --radius: 0.8rem;
+  --sidebar: #18152c;
+  --sidebar-foreground: #e5e1f0;
+  --sidebar-primary: #d6b76b;
+  --sidebar-primary-foreground: #111323;
+  --sidebar-accent: #2a1e4d;
+  --sidebar-accent-foreground: #e5e1f0;
+  --sidebar-border: color-mix(in srgb, #e5e1f0 16%, transparent);
+  --sidebar-ring: #d6b76b;
 }
 
 @layer base {
   * {
     @apply border-border outline-ring/50;
   }
-  body {
-    @apply bg-background text-foreground;
-  }
   html {
     @apply font-sans;
+    color-scheme: dark;
+  }
+  body {
+    @apply bg-background text-foreground;
+    background-color: var(--midnight);
+    background-image:
+      radial-gradient(ellipse 80% 50% at 50% -12%, color-mix(in srgb, var(--wonderland) 88%, transparent), transparent 62%),
+      radial-gradient(ellipse 42% 36% at 100% 100%, color-mix(in srgb, var(--looking-glass) 75%, transparent), transparent 70%),
+      radial-gradient(ellipse 28% 24% at 0% 80%, color-mix(in srgb, var(--mystic) 35%, transparent), transparent 70%),
+      radial-gradient(1.2px 1.2px at 12% 18%, rgb(229 225 240 / 0.75), transparent),
+      radial-gradient(1px 1px at 28% 72%, rgb(229 225 240 / 0.45), transparent),
+      radial-gradient(1.4px 1.4px at 73% 22%, rgb(214 183 107 / 0.7), transparent),
+      radial-gradient(1px 1px at 84% 58%, rgb(229 225 240 / 0.5), transparent),
+      radial-gradient(1.1px 1.1px at 46% 36%, rgb(229 225 240 / 0.4), transparent),
+      radial-gradient(1px 1px at 18% 48%, rgb(229 225 240 / 0.35), transparent),
+      radial-gradient(1.3px 1.3px at 62% 78%, rgb(229 225 240 / 0.45), transparent),
+      radial-gradient(1px 1px at 91% 14%, rgb(229 225 240 / 0.55), transparent),
+      radial-gradient(1px 1px at 37% 12%, rgb(214 183 107 / 0.45), transparent),
+      radial-gradient(1.2px 1.2px at 55% 88%, rgb(229 225 240 / 0.4), transparent);
+    background-attachment: fixed;
+    background-repeat: no-repeat;
+  }
+  ::selection {
+    background: var(--mystic);
+    color: var(--paper);
+  }
+}
+
+@keyframes fall-out {
+  from {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(2.75rem);
+  }
+}
+
+@keyframes fall-in {
+  from {
+    opacity: 0;
+    transform: translateY(-2rem);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes status-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.45;
+  }
+}
+
+.fall-out {
+  animation: fall-out 420ms ease-in forwards;
+}
+
+.fall-in {
+  animation: fall-in 560ms ease-out both;
+}
+
+.status-pulse {
+  animation: status-pulse 1.4s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .fall-out,
+  .fall-in,
+  .status-pulse {
+    animation: none;
   }
 }
