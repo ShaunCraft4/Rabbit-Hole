@@ -22,6 +22,7 @@ import {
   type ResearchResponse,
   type ResearchStatus,
 } from "@/lib/contracts";
+import { fallbackLabel } from "@/lib/skilltree/labels";
 import type { Claim, Source } from "@/lib/types";
 
 import { BUDGET, PIPELINE, SOLARI } from "./budget";
@@ -186,6 +187,7 @@ export function buildVerifiedClaims(extracted: ExtractedClaim[], opts: VerifyOpt
       verified: true,
       evidenceStatus: source.retrievalStatus === "snippet_only" ? "snippet_only" : "single_source",
       ...(c.dateMentioned ? { dateMentioned: c.dateMentioned } : {}),
+      label: c.label ?? fallbackLabel(c.text),
     });
   }
   return { claims, rejections, duplicates, overCap };

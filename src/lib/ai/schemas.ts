@@ -6,6 +6,7 @@
 import { z } from "zod";
 
 import { LIMITS } from "@/lib/contracts";
+import { cleanLabel } from "@/lib/skilltree/labels";
 
 // ---------------------------------------------------------------------------
 // 1. PLAN
@@ -118,6 +119,8 @@ export interface ExtractedClaim {
   text: string;
   claimType: ClaimType;
   dateMentioned?: string;
+  /** The model's short node name, kept only if cleanLabel accepts it. */
+  label?: string;
 }
 
 export interface ExtractOutput {
@@ -173,6 +176,8 @@ const ExtractItemSchema = z.object({
       const v = d === null || d === undefined ? "" : String(d).trim();
       return NO_DATE.has(v.toLowerCase()) || v.length > LIMITS.dateChars ? undefined : v;
     }),
+  /** Checked against the claim's own text below; a bad label is dropped, never the claim. */
+  label: z.unknown().optional(),
 });
 
 /**
@@ -197,8 +202,9 @@ export const extractOutputSchema = z.preprocess(
           malformed++;
           continue;
         }
-        const { dateMentioned, ...rest } = parsed.data;
-        claims.push(dateMentioned ? { ...rest, dateMentioned } : rest);
+        const { dateMentioned, label: rawLabel, ...rest } = parsed.data;
+        const label = cleanLabel(rawLabel, `${rest.text}\n${rest.excerpt}`);
+        claims.push({ ...rest, ...(dateMentioned ? { dateMentioned } : {}), ...(label ? { label } : {}) });
       }
       return { claims, malformed };
     }),
@@ -218,6 +224,8 @@ export interface RawGap {
   claimIds: string[];
   branchId?: string;
   suggestedQuery?: string;
+  /** The model's short node name, kept only if cleanLabel accepts it. */
+  label?: string;
 }
 
 export interface RawClaimGroup {
@@ -313,6 +321,7 @@ const GapItemSchema = z.object({
     .string()
     .nullish()
     .transform((q) => (q ? cleanQuery(q).slice(0, LIMITS.queryChars) || undefined : undefined)),
+  label: z.unknown().optional(),
 });
 
 const GroupItemSchema = z.object({
@@ -371,7 +380,10 @@ export const analyzeOutputSchema = z
     const bad = () => {
       malformed++;
     };
-    const gaps = parseItems(GapItemSchema, raw.gaps, bad);
+    const gaps = parseItems(GapItemSchema, raw.gaps, bad).map(({ label: rawLabel, ...gap }): RawGap => {
+      const label = cleanLabel(rawLabel, `${gap.question}\n${gap.whyItMatters}`);
+      return label ? { ...gap, label } : gap;
+    });
     const claimGroups = parseItems(GroupItemSchema, raw.claimGroups ?? raw.groups, bad);
     const outdated = parseItems(OutdatedItemSchema, raw.outdated, bad);
     const connections = parseItems(ConnectionItemSchema, raw.connections, bad);

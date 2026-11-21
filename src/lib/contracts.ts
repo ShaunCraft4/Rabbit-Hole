@@ -54,6 +54,8 @@ export const LIMITS = {
   /** Server-only page text. */
   sourceTextChars: 100_000,
   dateChars: 100,
+  /** Claim.label / Gap.label: a short skill-tree node name. */
+  labelChars: 40,
   claimTextChars: 800,
   excerptChars: 600,
   /** Per research response. */
@@ -152,6 +154,7 @@ export const ClaimSchema = z.object({
   verified: z.boolean(),
   evidenceStatus: EvidenceStatusSchema,
   dateMentioned: z.string().max(LIMITS.dateChars).optional(),
+  label: text(LIMITS.labelChars).optional(),
 });
 
 /** Research responses only ever contain claims whose excerpt passed verifyExcerpt. */
@@ -169,6 +172,7 @@ export const GapSchema = z.object({
   claimIds: z.array(IdSchema).max(LIMITS.maxGapClaimIds),
   suggestedQuery: z.string().trim().max(LIMITS.queryChars).optional(),
   status: GapStatusSchema,
+  label: text(LIMITS.labelChars).optional(),
 });
 
 export const ConnectionRelationshipSchema = z.enum([

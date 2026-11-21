@@ -1,0 +1,685 @@
+{
+  "id": "saved-how-can-my-student-club-at-uc-riverside-get-fund",
+  "question": "How can my student club at UC Riverside get funding for a cultural night event with food?",
+  "assumptions": [
+    "Assuming the institution is University of California, Riverside (UCR) in Riverside, California, and the club is a registered student organization.",
+    "Assuming the event is held on or near campus during the 2026-27 academic year, with a planned date sometime in the coming months.",
+    "Assuming the club is seeking funds from campus sources such as the Associated Students or student government, departmental or cultural center budgets, and relevant campus offices rather than external grants.",
+    "Assuming the club needs to know both the funding application process and the rules that govern food purchases and events."
+  ],
+  "branches": [
+    {
+      "id": "student-government-funding-sources",
+      "title": "Student government funding sources",
+      "question": "Which UCR Associated Students or student government funding programs can a registered student club apply to for a cultural event with food, and what are their criteria?",
+      "queries": [
+        "UC Riverside Associated Students funding request student organizations 2026-27",
+        "UCR A.S. student organization programming fund application eligibility"
+      ],
+      "status": "done"
+    },
+    {
+      "id": "campus-cultural-and-departmental-grants",
+      "title": "Campus cultural and departmental grants",
+      "question": "Which UCR cultural centers, diversity offices, or departments offer co-sponsorship or event grants that student clubs can request for cultural programming in 2026-27?",
+      "queries": [
+        "UC Riverside cultural centers student org event co-sponsorship funding 2026-27",
+        "UCR Student Life Office multicultural programming grant student clubs"
+      ],
+      "status": "done"
+    },
+    {
+      "id": "application-deadlines-and-process",
+      "title": "Application deadlines and process",
+      "question": "What are the UCR application steps, required documents, and deadlines for requesting event funding, including registration status and any budget or reimbursement rules?",
+      "queries": [
+        "UC Riverside student organization funding request deadlines reimbursement process 2026",
+        "UCR Campus Life student org budget request form required documents fall 2026"
+      ],
+      "status": "done"
+    },
+    {
+      "id": "food-and-event-policy-rules",
+      "title": "Food and event policy rules",
+      "question": "What UCR rules govern serving food at student club events, such as catering vendor requirements, food safety permits, event reservation, and restrictions on using funds for food?",
+      "queries": [
+        "UC Riverside student event food catering policy registered student organizations 2026",
+        "UCR event reservation food permit requirements student organizations Riverside County"
+      ],
+      "status": "done"
+    }
+  ],
+  "sources": [
+    {
+      "id": "src_2b1aadcd12",
+      "url": "https://asucr.ucr.edu/budget/org-funding",
+      "domain": "asucr.ucr.edu",
+      "title": "Student Organization Funding",
+      "retrievalStatus": "full_text",
+      "publishedAt": "2026-10-27T18:43:30Z",
+      "snippet": "Every Registered Student Organization (RSO) must activate their ASUCR account every academic year (Oct-June). Accounts must be activated for new RSOs and reactivated for returning RSOs each year. Accounts for FY27 may be activated through Winter quarter and access to funds will expire June 4th, 2027. Student organizations will request funding along with the account activation. Step 1: Register…",
+      "retrievedVia": "keenable"
+    },
+    {
+      "id": "src_f328e0199d",
+      "url": "https://studentinitiatedprograms.ucr.edu/application",
+      "domain": "studentinitiatedprograms.ucr.edu",
+      "title": "SIP Grant",
+      "retrievalStatus": "full_text",
+      "publishedAt": "2026-09-15T15:52:36Z",
+      "snippet": "Student-Initiated Programs (SIP) introduces K-12 and community college students to the college experience and the possibilities of higher education. Open to all students, including those interested in learning more about college, SIP offers academic enrichment and personalized mentoring from volunteer UC students to help participants build skills, gain confidence, and prepare for success in their…",
+      "retrievedVia": "keenable"
+    },
+    {
+      "id": "src_de520a7dd1",
+      "url": "https://ideasandsociety.ucr.edu/cosponsorship",
+      "domain": "ideasandsociety.ucr.edu",
+      "title": "Event cosponsorship",
+      "retrievalStatus": "full_text",
+      "publishedAt": "2026-04-23T02:51:51Z",
+      "snippet": "CHASS-CIS Event Cosponsorship Awards Supplemental funding for events hosted at UC Riverside by CHASS departments and programs Eligibility - Hosted at/by UC Riverside (in person or virtual/hybrid) - Hosted by CHASS departments - Applicants must be CHASS faculty and/or graduate students - Event is free and open to the public - Event has committed funding (CHASS-CIS awards are supplemental and are…",
+      "retrievedVia": "keenable"
+    },
+    {
+      "id": "src_ff9848d33c",
+      "url": "https://asucr.ucr.edu/orgbudget",
+      "domain": "asucr.ucr.edu",
+      "title": "Student Organization Annual Budget Process",
+      "retrievalStatus": "full_text",
+      "publishedAt": "2026-05-01T17:13:42Z",
+      "snippet": "The new funding model move the initial allocation process to the spring alongside our annual budget process and requires (1) budget applications from each organization to continue to understand the organizations needs and (2) shifts annual increases to be based on expense history. Monday, May 11 Deadline Extended! | Budget Request Form Due…",
+      "retrievedVia": "keenable"
+    },
+    {
+      "id": "src_657f91eed0",
+      "url": "https://webarchive.ucr.edu/asucr.ucr.edu/orgbudget.html",
+      "domain": "webarchive.ucr.edu",
+      "title": "Student Organization Annual Budget Process",
+      "retrievalStatus": "full_text",
+      "publishedAt": "2026-04-03T23:22:55Z",
+      "snippet": "The new funding model move the initial allocation process to the spring alongside our annual budget process and requires (1) budget applications from each organization to continue to understand the organizations needs and (2) shifts annual increases to be based on expense history. Monday, May 4 | Budget Request Form Due https://asucr.jotform.com/form/organization-budget-request-fy26-27 What is in…",
+      "retrievedVia": "keenable"
+    },
+    {
+      "id": "src_6d7563ab37",
+      "url": "https://asucrexchange.ucr.edu/budget/org-funding",
+      "domain": "asucrexchange.ucr.edu",
+      "title": "Student Organization Funding",
+      "retrievalStatus": "full_text",
+      "publishedAt": "2026-10-27T18:43:30Z",
+      "snippet": "Every Registered Student Organization (RSO) must activate their ASUCR account every academic year (Oct-June). Accounts must be activated for new RSOs and reactivated for returning RSOs each year. Accounts for FY27 may be activated through Winter quarter and access to funds will expire June 4th, 2027. Student organizations will request funding along with the account activation. Step 3: Submit the…",
+      "retrievedVia": "keenable"
+    },
+    {
+      "id": "src_dfa289ed4e",
+      "url": "https://campusreturn.ucr.edu/food-permit",
+      "domain": "campusreturn.ucr.edu",
+      "title": "Food Permit Process",
+      "retrievalStatus": "full_text",
+      "publishedAt": "2026-04-01T21:21:42Z",
+      "snippet": "Students, faculty, and staff who wish to serve food and drinks at public events (e.g., general meetings, Nooners) must obtain a \"Temporary Food Permit\" to protect the community's health and meet \"California Retail Food Code\" requirements. It is essential that anyone looking to sell food and beverages on campus understands and adheres to campus guidelines to ensure a positive, healthy experience…",
+      "retrievedVia": "keenable"
+    },
+    {
+      "id": "src_6fe119466c",
+      "url": "https://ehs.ucr.edu/food-permit",
+      "domain": "ehs.ucr.edu",
+      "title": "Food Permit Process",
+      "retrievalStatus": "full_text",
+      "publishedAt": "2026-08-11T16:13:16Z",
+      "snippet": "Food Permit Process Serving or selling food/beverages at a public campus event? A \"Temporary Food Permit\" may be required to help protect our campus community and meet California food safety requirements. Campus departments and organizations may also invite approved food vendors to participate in UCR events. Permit Requirement A Temporary Food Permit is required when food or drinks are served to…",
+      "retrievedVia": "keenable"
+    },
+    {
+      "id": "src_ca924d0471",
+      "url": "https://studentlife.ucr.edu/media/491/download?attachment=",
+      "domain": "studentlife.ucr.edu",
+      "title": "Microsoft Word - Student Org Policies - Finalized August 2024.V2",
+      "retrievalStatus": "full_text",
+      "publishedAt": "2024-08-16T18:23:13Z",
+      "snippet": "9. Student organizations that have accrued a minimum of $300 in late fees for reservations they’ve placed on-campus are ineligible to re-register until they’ve paid all fees through our Student Business Services office. It is very important to assign at least two Reservers if you want to be able to reserve spaces on campus. Only these two positions are able to do so. To login to the room…",
+      "retrievedVia": "keenable"
+    }
+  ],
+  "claims": [
+    {
+      "id": "campus-cultural-and-departmental-grants-c1",
+      "branchId": "campus-cultural-and-departmental-grants",
+      "text": "ASUCR Organization Grants are limited to $1,500 per organization per academic year.",
+      "excerpt": "Grants are limited to $1,500 per organization per academic year.",
+      "sourceId": "src_2b1aadcd12",
+      "verified": true,
+      "evidenceStatus": "single_source",
+      "label": "ASUCR grant cap"
+    },
+    {
+      "id": "campus-cultural-and-departmental-grants-c2",
+      "branchId": "campus-cultural-and-departmental-grants",
+      "text": "ASUCR Organization Grants fund on-campus, one-day events that are open to all students.",
+      "excerpt": "Organization Grants are funded for on-campus, one-day events that are open to all students.",
+      "sourceId": "src_2b1aadcd12",
+      "verified": true,
+      "evidenceStatus": "single_source",
+      "label": "ASUCR eligible event type"
+    },
+    {
+      "id": "campus-cultural-and-departmental-grants-c3",
+      "branchId": "campus-cultural-and-departmental-grants",
+      "text": "ASUCR FY27 accounts may be activated through Winter quarter, and access to funds expires June 4, 2027.",
+      "excerpt": "Accounts for FY27 may be activated through Winter quarter and access to funds will expire June 4th, 2027.",
+      "sourceId": "src_2b1aadcd12",
+      "verified": true,
+      "evidenceStatus": "single_source",
+      "dateMentioned": "June 4th, 2027",
+      "label": "ASUCR FY27 funds expiry"
+    },
+    {
+      "id": "campus-cultural-and-departmental-grants-c4",
+      "branchId": "campus-cultural-and-departmental-grants",
+      "text": "ASUCR grants fund professional speakers, performers, and DJs up to $550 per grant.",
+      "excerpt": "Professional speakers, performers, DJ’s, etc. will be funded up to $550 per grant.",
+      "sourceId": "src_2b1aadcd12",
+      "verified": true,
+      "evidenceStatus": "single_source",
+      "label": "ASUCR speaker fee limit"
+    },
+    {
+      "id": "campus-cultural-and-departmental-grants-c5",
+      "branchId": "campus-cultural-and-departmental-grants",
+      "text": "UCR registered student organizations can apply through Student-Initiated Programs (SIP) for a SIP Grant to fund outreach events aligned with SIP's vision and objectives.",
+      "excerpt": "Through SIP, UCR registered student organizations can apply for a SIP Grant to secure funding for their outreach activities and events that align with our outreach vision and objectives.",
+      "sourceId": "src_f328e0199d",
+      "verified": true,
+      "evidenceStatus": "single_source",
+      "label": "SIP outreach grant eligibility"
+    },
+    {
+      "id": "campus-cultural-and-departmental-grants-c6",
+      "branchId": "campus-cultural-and-departmental-grants",
+      "text": "SIP Grant applications should be submitted at least 4 weeks before the event.",
+      "excerpt": "Submit your application at least 4 weeks before your event to ensure ample time for our review and processing",
+      "sourceId": "src_f328e0199d",
+      "verified": true,
+      "evidenceStatus": "single_source",
+      "label": "SIP 4-week lead time"
+    },
+    {
+      "id": "campus-cultural-and-departmental-grants-c7",
+      "branchId": "campus-cultural-and-departmental-grants",
+      "text": "CHASS-CIS Event Cosponsorship Awards require applicants to be CHASS faculty and/or graduate students, not undergraduate student clubs.",
+      "excerpt": "Applicants must be CHASS faculty and/or graduate students",
+      "sourceId": "src_de520a7dd1",
+      "verified": true,
+      "evidenceStatus": "single_source",
+      "label": "CHASS applicant restriction"
+    },
+    {
+      "id": "campus-cultural-and-departmental-grants-c8",
+      "branchId": "campus-cultural-and-departmental-grants",
+      "text": "The CHASS-CIS Cosponsorship Program is temporarily paused and will reopen September 1, 2026 for 2026-27 event applications.",
+      "excerpt": "The CHASS-CIS Cosponsorship Program is temporarily paused and will reopen on September 1, 2026 for applications for 2026-27 events.",
+      "sourceId": "src_de520a7dd1",
+      "verified": true,
+      "evidenceStatus": "outdated",
+      "dateMentioned": "September 1, 2026",
+      "label": "CHASS program reopening date"
+    },
+    {
+      "id": "application-deadlines-and-process-c1",
+      "branchId": "application-deadlines-and-process",
+      "text": "A student organization must hold current registration with Student Life before any ASUCR funding steps can proceed.",
+      "excerpt": "Your RSO must hold current registration before anything else can happen.",
+      "sourceId": "src_2b1aadcd12",
+      "verified": true,
+      "evidenceStatus": "single_source",
+      "label": "Current registration required"
+    },
+    {
+      "id": "application-deadlines-and-process-c2",
+      "branchId": "application-deadlines-and-process",
+      "text": "ASUCR accounts for FY27 may be activated through Winter quarter, and access to funds expires June 4, 2027.",
+      "excerpt": "Accounts for FY27 may be activated through Winter quarter and access to funds will expire June 4th, 2027.",
+      "sourceId": "src_2b1aadcd12",
+      "verified": true,
+      "evidenceStatus": "single_source",
+      "dateMentioned": "June 4th, 2027",
+      "label": "FY27 account activation deadline"
+    },
+    {
+      "id": "application-deadlines-and-process-c3",
+      "branchId": "application-deadlines-and-process",
+      "text": "ASUCR organization grants are capped at $1,500 per organization per academic year.",
+      "excerpt": "Grants are limited to $1,500 per organization per academic year.",
+      "sourceId": "src_2b1aadcd12",
+      "verified": true,
+      "evidenceStatus": "single_source",
+      "label": "Organization grant cap"
+    },
+    {
+      "id": "application-deadlines-and-process-c4",
+      "branchId": "application-deadlines-and-process",
+      "text": "The Direct Deposit Form must be completed before submitting a requisition for reimbursement, and the bank transaction period is 3 days.",
+      "excerpt": "Please complete the Direct Deposit Form prior to submitting your requisition for reimbursement.",
+      "sourceId": "src_2b1aadcd12",
+      "verified": true,
+      "evidenceStatus": "single_source",
+      "label": "Direct Deposit Form · 3 days"
+    },
+    {
+      "id": "application-deadlines-and-process-c5",
+      "branchId": "application-deadlines-and-process",
+      "text": "The extended deadline for the FY26-27 organization budget request form is Monday, May 11.",
+      "excerpt": "Monday, May 11 Deadline Extended! | Budget Request Form Due",
+      "sourceId": "src_ff9848d33c",
+      "verified": true,
+      "evidenceStatus": "outdated",
+      "dateMentioned": "Monday, May 11",
+      "label": "Extended budget form deadline"
+    },
+    {
+      "id": "application-deadlines-and-process-c6",
+      "branchId": "application-deadlines-and-process",
+      "text": "The fall requisition form opens on September 28, 2026, when funded organizations can begin submitting payment or reimbursement requisitions.",
+      "excerpt": "On Monday, September 28, 2026, the fall requisition form will open and funding organizations can begin submitting requisitions for payment and/or reimbursement.",
+      "sourceId": "src_ff9848d33c",
+      "verified": true,
+      "evidenceStatus": "outdated",
+      "dateMentioned": "September 28, 2026",
+      "label": "Fall requisition form opening"
+    },
+    {
+      "id": "application-deadlines-and-process-c7",
+      "branchId": "application-deadlines-and-process",
+      "text": "New organizations are capped at $500 for their first year of funding from the $10,000 new-organization budget.",
+      "excerpt": "New organizations will be capped at $500 for the first year and after their initial funding, those student organization will be invited to continue through the outlined process.",
+      "sourceId": "src_ff9848d33c",
+      "verified": true,
+      "evidenceStatus": "single_source",
+      "label": "New organization $500 cap"
+    },
+    {
+      "id": "application-deadlines-and-process-c8",
+      "branchId": "application-deadlines-and-process",
+      "text": "In the archived timeline, the budget request form was due Monday, May 4, before the deadline was later extended.",
+      "excerpt": "Monday, May 4 | Budget Request Form Due",
+      "sourceId": "src_657f91eed0",
+      "verified": true,
+      "evidenceStatus": "outdated",
+      "dateMentioned": "Monday, May 4",
+      "label": "Original budget form deadline"
+    },
+    {
+      "id": "student-government-funding-sources-c1",
+      "branchId": "student-government-funding-sources",
+      "text": "ASUCR Organization Grants fund on-campus, one-day events that are open to all students.",
+      "excerpt": "Organization Grants are funded for on-campus, one-day events that are open to all students.",
+      "sourceId": "src_2b1aadcd12",
+      "verified": true,
+      "evidenceStatus": "single_source",
+      "label": "Grant event type"
+    },
+    {
+      "id": "student-government-funding-sources-c2",
+      "branchId": "student-government-funding-sources",
+      "text": "ASUCR Organization Grants are limited to $1,500 per organization per academic year.",
+      "excerpt": "Grants are limited to $1,500 per organization per academic year.",
+      "sourceId": "src_2b1aadcd12",
+      "verified": true,
+      "evidenceStatus": "single_source",
+      "dateMentioned": "academic year",
+      "label": "Grant $1,500 annual cap"
+    },
+    {
+      "id": "student-government-funding-sources-c3",
+      "branchId": "student-government-funding-sources",
+      "text": "Up to $500 or 50% of an ASUCR event grant, whichever is less, may be used to fund food.",
+      "excerpt": "Up to $500 or 50%, whichever is less, of the event grant may be used to fund food.",
+      "sourceId": "src_2b1aadcd12",
+      "verified": true,
+      "evidenceStatus": "single_source",
+      "label": "Grant food spending cap"
+    },
+    {
+      "id": "student-government-funding-sources-c4",
+      "branchId": "student-government-funding-sources",
+      "text": "Organizations seeking ASUCR grant funding must first have activated an ASUCR account.",
+      "excerpt": "Any student organizations seeking grant funding will need to make sure that they have activated an account with ASUCR.",
+      "sourceId": "src_2b1aadcd12",
+      "verified": true,
+      "evidenceStatus": "single_source",
+      "label": "Grant account activation"
+    },
+    {
+      "id": "student-government-funding-sources-c5",
+      "branchId": "student-government-funding-sources",
+      "text": "The new ASUCR funding model includes a $10,000 pool for new organizations seeking funding outside the annual budget process.",
+      "excerpt": "The new model includes a $10,000 budget to allocate for new organizations seeking funding outside of the annual budget process.",
+      "sourceId": "src_ff9848d33c",
+      "verified": true,
+      "evidenceStatus": "single_source",
+      "label": "New org $10,000 pool"
+    },
+    {
+      "id": "student-government-funding-sources-c6",
+      "branchId": "student-government-funding-sources",
+      "text": "New organizations are capped at $500 of ASUCR funding for their first year.",
+      "excerpt": "New organizations will be capped at $500 for the first year",
+      "sourceId": "src_ff9848d33c",
+      "verified": true,
+      "evidenceStatus": "single_source",
+      "dateMentioned": "first year",
+      "label": "New org $500 first-year cap"
+    },
+    {
+      "id": "student-government-funding-sources-c7",
+      "branchId": "student-government-funding-sources",
+      "text": "The ASUCR organization budget request form was due Monday, May 11 after an extension.",
+      "excerpt": "Monday, May 11 Deadline Extended! | Budget Request Form Due",
+      "sourceId": "src_ff9848d33c",
+      "verified": true,
+      "evidenceStatus": "outdated",
+      "dateMentioned": "Monday, May 11",
+      "label": "Budget request form deadline"
+    },
+    {
+      "id": "food-and-event-policy-rules-c1",
+      "branchId": "food-and-event-policy-rules",
+      "text": "Registered clubs hosting a campus event where food or beverages are offered to the public, free or for purchase, must obtain a Temporary Food Permit.",
+      "excerpt": "Any campus department or organization (including UCR registered clubs and organizations, etc.) hosting a campus event where food or beverages are offered to the public, either free or for purchase, is required to obtain a Temporary Food Permit.",
+      "sourceId": "src_dfa289ed4e",
+      "verified": true,
+      "evidenceStatus": "corroborated",
+      "label": "Temporary Food Permit required"
+    },
+    {
+      "id": "food-and-event-policy-rules-c2",
+      "branchId": "food-and-event-policy-rules",
+      "text": "For hot food, at least three people must complete UCR Online Food Safety Training, and everyone preparing or handling the food must be trained.",
+      "excerpt": "Hot food: At least three people and everyone who is preparing or handling food must be trained.",
+      "sourceId": "src_dfa289ed4e",
+      "verified": true,
+      "evidenceStatus": "single_source",
+      "label": "Hot food training staffing"
+    },
+    {
+      "id": "food-and-event-policy-rules-c3",
+      "branchId": "food-and-event-policy-rules",
+      "text": "The Temporary Food Permit application must be submitted at least 7 business days before the event.",
+      "excerpt": "Apply for a permit at least 7 business days in advance of your event.",
+      "sourceId": "src_dfa289ed4e",
+      "verified": true,
+      "evidenceStatus": "single_source",
+      "label": "Temporary Food Permit"
+    },
+    {
+      "id": "food-and-event-policy-rules-c4",
+      "branchId": "food-and-event-policy-rules",
+      "text": "Outside food vendors must be sponsored by a UCR department or registered student organization and approved by UCR Procurement before operating on campus.",
+      "excerpt": "Vendors must be sponsored by a UCR department or registered student organization and approved by UCR Procurement before operating on campus.",
+      "sourceId": "src_6fe119466c",
+      "verified": true,
+      "evidenceStatus": "corroborated",
+      "label": "Vendor sponsor and approval"
+    },
+    {
+      "id": "food-and-event-policy-rules-c5",
+      "branchId": "food-and-event-policy-rules",
+      "text": "UCR students, faculty, staff, and affiliates must obtain a Temporary Food Permit whenever food or beverage is distributed or sold to the public on campus.",
+      "excerpt": "All UCR students, faculty, staff, and affiliates must obtain a Temporary Food Permit whenever food or beverage is distributed or sold to the public on campus.",
+      "sourceId": "src_ca924d0471",
+      "verified": true,
+      "evidenceStatus": "outdated",
+      "label": "UCR"
+    },
+    {
+      "id": "food-and-event-policy-rules-c6",
+      "branchId": "food-and-event-policy-rules",
+      "text": "For full-service catered meals, students, faculty and staff must use catering services provided by UC Dining Services.",
+      "excerpt": "For full-service catered meals, students, faculty and staff will be required to use catering services by UC Dining Services.",
+      "sourceId": "src_ca924d0471",
+      "verified": true,
+      "evidenceStatus": "outdated",
+      "label": "UC Dining catering requirement"
+    },
+    {
+      "id": "food-and-event-policy-rules-c7",
+      "branchId": "food-and-event-policy-rules",
+      "text": "A food permit is not required if food is provided only to general members or the event is invite-only.",
+      "excerpt": "If you’re only providing food for your general members or your event is invite-only, a food permit is not required.",
+      "sourceId": "src_ca924d0471",
+      "verified": true,
+      "evidenceStatus": "single_source",
+      "label": "Invite-only food permit exemption"
+    },
+    {
+      "id": "food-and-event-policy-rules-c8",
+      "branchId": "food-and-event-policy-rules",
+      "text": "All food or drink sold or distributed on campus must be pre-approved by the Procurement Department.",
+      "excerpt": "All food/drink sold or distributed on campus must be pre-approved by the Procurement Department.",
+      "sourceId": "src_ca924d0471",
+      "verified": true,
+      "evidenceStatus": "corroborated",
+      "label": "Procurement pre-approval of food"
+    }
+  ],
+  "gaps": [
+    {
+      "id": "gap-what-is-the-actual-asucr-organization-grant-appl",
+      "branchId": "application-deadlines-and-process",
+      "question": "What is the actual ASUCR Organization Grant application process and deadline for a fall or winter 2026-27 cultural night (application form, submission window, how far ahead of the event, approval timeline)?",
+      "whyItMatters": "The claims give only the May 2026 budget request deadline and account activation dates, so the club could miss the window for its event and not be funded in time.",
+      "kind": "missing",
+      "claimIds": [
+        "student-government-funding-sources-c7",
+        "application-deadlines-and-process-c5",
+        "application-deadlines-and-process-c2"
+      ],
+      "suggestedQuery": "ASUCR organization grant application deadline 2026-27 event funding",
+      "status": "open",
+      "label": "ASUCR grant deadline"
+    },
+    {
+      "id": "gap-do-asucr-organization-grants-on-campus-one-day-e",
+      "branchId": "food-and-event-policy-rules",
+      "question": "Do ASUCR Organization Grants (on-campus, one-day events open to all students) and the Temporary Food Permit exemption for invite-only or members-only events fit a cultural night that serves food, and which applies if the event is open to all?",
+      "whyItMatters": "ASUCR requires events open to all students, yet the food permit exemption only covers general-member or invite-only events, so an open event will almost certainly need the permit and its training and lead-time requirements.",
+      "kind": "conflict",
+      "claimIds": [
+        "student-government-funding-sources-c1",
+        "food-and-event-policy-rules-c7",
+        "food-and-event-policy-rules-c1"
+      ],
+      "suggestedQuery": "UCR Temporary Food Permit student organization open event requirements 2026",
+      "status": "open",
+      "label": "Food permit applicability"
+    },
+    {
+      "id": "gap-are-the-student-life-food-rules-uc-dining-servic",
+      "branchId": "food-and-event-policy-rules",
+      "question": "Are the Student Life food rules (UC Dining Services catering requirement, Procurement pre-approval, permit exemption) still current for 2026-27?",
+      "whyItMatters": "These claims come from a page dated August 2024, so the catering vendor requirement or exemption may have changed and the club could choose a non-compliant caterer.",
+      "kind": "outdated",
+      "claimIds": [
+        "food-and-event-policy-rules-c6",
+        "food-and-event-policy-rules-c7",
+        "food-and-event-policy-rules-c8"
+      ],
+      "suggestedQuery": "UCR student organization food catering UC Dining Services Procurement approval 2026-27",
+      "status": "open",
+      "label": "Catering rule currency"
+    },
+    {
+      "id": "gap-does-the-student-initiated-programs-sip-grant-co",
+      "branchId": "campus-cultural-and-departmental-grants",
+      "question": "Does the Student-Initiated Programs (SIP) Grant cover a campus cultural night with food, or is it limited to outreach events, and what are its award amounts and food rules?",
+      "whyItMatters": "SIP funds only outreach activities aligned with its objectives, so the club could spend four weeks applying for a grant that does not cover a cultural night or food.",
+      "kind": "weak",
+      "claimIds": [
+        "campus-cultural-and-departmental-grants-c5",
+        "campus-cultural-and-departmental-grants-c6"
+      ],
+      "suggestedQuery": "UCR Student-Initiated Programs SIP Grant eligibility food cultural event",
+      "status": "open",
+      "label": "SIP grant fit"
+    },
+    {
+      "id": "gap-which-ucr-cultural-centers-or-diversity-offices",
+      "branchId": "campus-cultural-and-departmental-grants",
+      "question": "Which UCR cultural centers or diversity offices (beyond ASUCR, SIP, and CHASS-CIS) offer co-sponsorship for undergraduate club cultural nights in 2026-27?",
+      "whyItMatters": "The only cultural or departmental co-sponsorship found, CHASS-CIS, excludes undergraduate clubs, and ASUCR grants cap at $1,500 with food limited to $500 or 50%, which may not cover the event.",
+      "kind": "missing",
+      "claimIds": [
+        "campus-cultural-and-departmental-grants-c7",
+        "student-government-funding-sources-c3"
+      ],
+      "suggestedQuery": "UCR cultural centers student organization event cosponsorship funding 2026-27",
+      "status": "open",
+      "label": "Cultural center funding"
+    }
+  ],
+  "connections": [
+    {
+      "id": "conn-0bdd5e84d8a7",
+      "from": "student-government-funding-sources-c4",
+      "to": "application-deadlines-and-process-c1",
+      "relationship": "depends_on",
+      "explanation": "Activating an ASUCR account depends on the club first holding current Student Life registration, so registration must be confirmed first.",
+      "accepted": true
+    },
+    {
+      "id": "conn-b716174e3c96",
+      "from": "student-government-funding-sources-c1",
+      "to": "food-and-event-policy-rules-c1",
+      "relationship": "related_to",
+      "explanation": "An ASUCR-funded event must be open to all students, so food served there is offered to the public and triggers the Temporary Food Permit.",
+      "accepted": true
+    },
+    {
+      "id": "conn-fc3f851a723a",
+      "from": "student-government-funding-sources-c3",
+      "to": "food-and-event-policy-rules-c6",
+      "relationship": "related_to",
+      "explanation": "ASUCR limits food spending to $500 or 50% of the grant, while full-service catering may have to come from UC Dining Services, which could exceed that budget.",
+      "accepted": true
+    },
+    {
+      "id": "conn-57cc9937d4fc",
+      "from": "application-deadlines-and-process-c4",
+      "to": "student-government-funding-sources-c2",
+      "relationship": "related_to",
+      "explanation": "Grant money up to the $1,500 cap is paid by reimbursement requisition, which needs the Direct Deposit Form completed first.",
+      "accepted": true
+    }
+  ],
+  "report": {
+    "directAnswer": "If your club holds current Student Life registration and has activated an ASUCR account, you can likely apply for an ASUCR Organization Grant of up to $1,500 per academic year for an on-campus, one-day event open to all students. Food may take up to $500 or 50% of the grant, whichever is less. Because the event must be open to all, it will likely need a Temporary Food Permit, applied for at least 7 business days ahead, with trained food handlers. The biggest unknown is the actual ASUCR grant application form and deadline for a fall or winter event, because the sources only give the May budget deadline and account activation dates. Other options are unclear: the SIP Grant is described only for outreach events, and the CHASS-CIS cosponsorship is for CHASS faculty and graduate students, not undergraduate clubs.",
+    "keyDiscoveries": [
+      {
+        "claimId": "student-government-funding-sources-c1",
+        "summary": "ASUCR Organization Grants fund on-campus, one-day events that are open to all students."
+      },
+      {
+        "claimId": "student-government-funding-sources-c2",
+        "summary": "ASUCR Organization Grants are limited to $1,500 per organization per academic year."
+      },
+      {
+        "claimId": "student-government-funding-sources-c3",
+        "summary": "Up to $500 or 50% of an ASUCR event grant, whichever is less, may be used for food."
+      },
+      {
+        "claimId": "application-deadlines-and-process-c1",
+        "summary": "Your student organization must hold current registration before any ASUCR funding steps can proceed."
+      },
+      {
+        "claimId": "student-government-funding-sources-c4",
+        "summary": "Organizations seeking ASUCR grant funding must first have activated an ASUCR account."
+      },
+      {
+        "claimId": "campus-cultural-and-departmental-grants-c3",
+        "summary": "ASUCR FY27 accounts may be activated through Winter quarter, and access to funds expires June 4, 2027."
+      },
+      {
+        "claimId": "food-and-event-policy-rules-c1",
+        "summary": "Registered clubs hosting a campus event where food or beverages are offered to the public, free or paid, must obtain a Temporary Food Permit."
+      },
+      {
+        "claimId": "food-and-event-policy-rules-c3",
+        "summary": "The Temporary Food Permit application must be submitted at least 7 business days before the event."
+      }
+    ],
+    "planChangingConnections": [
+      {
+        "connectionId": "conn-0bdd5e84d8a7",
+        "text": "Confirm your Student Life registration first, because activating an ASUCR account, which is needed for any grant, depends on it."
+      },
+      {
+        "connectionId": "conn-b716174e3c96",
+        "text": "Since an ASUCR-funded event must be open to all students, plan on getting the Temporary Food Permit and its food safety training."
+      },
+      {
+        "connectionId": "conn-fc3f851a723a",
+        "text": "Check the catering rules before budgeting, because the $500 or 50% food limit may not cover full-service catering if UC Dining Services is required."
+      },
+      {
+        "connectionId": "conn-57cc9937d4fc",
+        "text": "Expect to be reimbursed rather than paid up front, and complete the Direct Deposit Form before submitting your requisition."
+      }
+    ],
+    "uncertainties": [
+      {
+        "gapId": "gap-what-is-the-actual-asucr-organization-grant-appl",
+        "text": "The ASUCR Organization Grant application form, submission window, lead time and approval timeline for a fall or winter 2026-27 event are not established."
+      },
+      {
+        "gapId": "gap-do-asucr-organization-grants-on-campus-one-day-e",
+        "text": "The food permit exemption covers only general-member or invite-only events, while ASUCR requires open events, so an open cultural night will likely need the permit, but this has not been confirmed for your event."
+      },
+      {
+        "gapId": "gap-are-the-student-life-food-rules-uc-dining-servic",
+        "text": "The Student Life food rules (UC Dining Services catering, Procurement pre-approval, permit exemption) may be outdated for 2026-27."
+      },
+      {
+        "gapId": "gap-does-the-student-initiated-programs-sip-grant-co",
+        "text": "It is not established whether the SIP Grant covers a cultural night with food, or what its award amounts and food rules are."
+      },
+      {
+        "gapId": "gap-which-ucr-cultural-centers-or-diversity-offices",
+        "text": "No cultural center or diversity office cosponsorship open to undergraduate clubs was found, so the $1,500 cap with a food limit of $500 or 50% may be all that is available."
+      },
+      {
+        "text": "Several ASUCR dates, such as the May 11 budget deadline and the September 28, 2026 requisition opening, may be outdated, and the CHASS-CIS reopening notice is dated and may be stale."
+      }
+    ],
+    "nextSteps": [
+      {
+        "step": "Confirm that your club's Student Life registration is current for 2026-27 and renew it if it is not.",
+        "reason": "ASUCR funding steps cannot proceed without current registration."
+      },
+      {
+        "step": "Activate your club's ASUCR account before Winter quarter ends.",
+        "reason": "Grant funding requires an activated account, and FY27 accounts may be activated only through Winter quarter."
+      },
+      {
+        "step": "Ask ASUCR which application form, submission window, and approval timeline apply to an Organization Grant for your cultural night.",
+        "reason": "The sources give only the May budget deadline and activation dates, not the grant application process."
+      },
+      {
+        "step": "Plan the event as on-campus, one day, and open to all students, and budget food at no more than $500 or 50% of the grant.",
+        "reason": "These are the ASUCR conditions for grant eligibility and food spending."
+      },
+      {
+        "step": "Apply for a Temporary Food Permit at least 7 business days before the event, and have at least three people complete UCR Online Food Safety Training if serving hot food.",
+        "reason": "An event open to the public with food needs the permit, and the permit and training rules carry lead times."
+      },
+      {
+        "step": "Ask Student Life and Procurement whether you must use UC Dining Services catering or can use an outside vendor, and get Procurement approval of the food before you buy.",
+        "reason": "The catering rule may be outdated, and outside vendors need sponsorship and Procurement approval."
+      },
+      {
+        "step": "Complete the Direct Deposit Form before submitting a reimbursement requisition, and ask Student-Initiated Programs, at least 4 weeks before the event, whether a SIP Grant could cover a cultural night.",
+        "reason": "Reimbursement requires the form first, and SIP's coverage of cultural nights with food is unconfirmed."
+      }
+    ]
+  },
+  "rejectedClaims": 0
+}

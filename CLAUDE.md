@@ -15,7 +15,7 @@ The server is stateless: four POST routes (`/api/plan`, `/api/research`, `/api/a
 | Path | Owner |
 | --- | --- |
 | `package.json`, `package-lock.json`, configs (`tsconfig.json`, `next.config.ts`, `eslint.config.mjs`, `components.json`, `.gitignore`), `.env.example`, `CLAUDE.md`, `AGENTS.md`, `README.md`, `.cursor/`, `docs/` | **Person A / Engine** |
-| `src/app/api/**`, `src/lib/ai/**`, `src/lib/research/**`, `scripts/**`, `src/fixtures/**`, `src/lib/utils.ts` | **Person A / Engine** |
+| `src/app/api/**`, `src/lib/ai/**`, `src/lib/research/**`, `src/lib/skilltree/**`, `scripts/**`, `src/fixtures/**`, `src/lib/utils.ts` | **Person A / Engine** |
 | `src/app/page.tsx`, `src/app/layout.tsx`, `src/app/globals.css`, `src/app/dream/**`, `src/app/report/**` | **Person B / Experience** |
 | `src/components/**` (including shadcn's `src/components/ui/**`), `src/lib/graph/**`, `src/lib/client/**`, `src/stores/**`, `public/**` | **Person B / Experience** |
 | `src/lib/types.ts`, `src/lib/contracts.ts` | **Frozen**: changed only through the CONTRACT protocol (rule 9) |
@@ -36,6 +36,7 @@ The server is stateless: four POST routes (`/api/plan`, `/api/research`, `/api/a
 
 - Branches: Engine works on `engine`, Experience on `experience`. To ship: `git pull --rebase origin main`, `npm run typecheck`, merge into `main`, push. Never force-push.
 - Commands: `npm run dev`, `npm run typecheck`, `npm run lint`, `npx tsx scripts/validate-fixture.ts`, and `npx tsx scripts/smoke-api.ts` (with the dev server running).
+- Skill tree: `src/lib/skilltree` (`buildSkillTree`, `buildNodePage`) is the pure layout the graph UI renders. Check it with `npx tsx scripts/test-skilltree.ts`; preview a saved run with `npx tsx scripts/preview-skilltree.ts out/<slug>.json --png`.
 - Until the real routes land, `/api/*` are **stubs** serving `src/fixtures/mock-investigation.json` after 1 to 2 seconds (response header `x-rabbit-hole-stub: 1`). A research branch whose title or question contains `#fail` returns a 502, so error UI can be tested. Real routes keep the same contracts, so client code should not need to change.
 - Errors from every route: HTTP 4xx/5xx with `{ "error": { "code": string, "message": string } }` (known codes: `API_ERROR_CODES` in `contracts.ts`).
 - This is Next.js 16 with Cache Components on, and it differs from older versions: check `AGENTS.md` and `node_modules/next/dist/docs/` before using an unfamiliar API.

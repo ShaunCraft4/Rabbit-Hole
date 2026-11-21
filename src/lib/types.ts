@@ -49,6 +49,8 @@ export interface Claim {
   verified: boolean;
   evidenceStatus: EvidenceStatus;
   dateMentioned?: string;
+  /** Short map name for the skill-tree node (2 to 5 words, e.g. "ASUCR grant cap"). Older saves may lack it. */
+  label?: string;
 }
 
 export type GapKind = "missing" | "conflict" | "outdated" | "weak";
@@ -64,6 +66,8 @@ export interface Gap {
   claimIds: string[];
   suggestedQuery?: string;
   status: GapStatus;
+  /** Short map name for the skill-tree node (2 to 5 words, e.g. "Food permit cost"). Older saves may lack it. */
+  label?: string;
 }
 
 export type ConnectionRelationship =

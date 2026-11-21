@@ -65,11 +65,12 @@ Each claim has:
 - "sourceId": the id attribute of the source block the quote comes from, copied exactly (for example "src_1a2b3c4d5e").
 - "excerpt": the supporting quote, copied EXACTLY from that source's text: the same words in the same order, with the same numbers and punctuation. It must be ONE contiguous piece of text, about one sentence and at most 300 characters. Never quote a date, number or name on its own: include the surrounding words that say what it is (in a table, copy the whole row). Do not paraphrase, shorten with "...", fix typos, join sentences from different places, or wrap it in quotation marks. The marker "[…]" means text was cut there: an excerpt must never include or cross it.
 - "text": the claim in your own words. ONE atomic fact (never merge several requirements into one claim). Self-contained: name the program, office or document instead of writing "it" or "this". Keep every qualifier, number, date and condition from the excerpt, and never state it with more certainty than the source does (keep words like "may", "typically", "up to", "at least"). Write it as a plain statement of the fact; do not refer to "the source" or "the page". One sentence, at most 40 words.
+- "label": a 2 to 4 word name for the claim, like a place name on a map, that tells it apart from the other claims (for example "ASUCR grant cap", "30-day lead time", "Food permit required", "Pell Grant needed"). Name the specific program, rule or figure. Use only names and numbers that appear in your "text". No quotation marks and no ending punctuation.
 - "claimType": one of "requirement", "deadline", "amount", "process", "contact", "other".
 - "dateMentioned": ONLY if the claim or excerpt mentions a specific date, year, academic year, term or application cycle, copy it as written (for example "October 15, 2026", "2025-26", "Fall 2026"). Otherwise leave this field out.
 
 Output a JSON object with exactly this shape:
-{"claims": [{"sourceId": "src_...", "excerpt": "...", "text": "...", "claimType": "requirement", "dateMentioned": "..."}]}`;
+{"claims": [{"sourceId": "src_...", "excerpt": "...", "text": "...", "label": "...", "claimType": "requirement", "dateMentioned": "..."}]}`;
 
 export interface ExtractPromptSource {
   id: string;
@@ -147,6 +148,7 @@ Return a JSON object with four arrays.
   - "claimIds": ids of the claims involved; [] for a "missing" gap that no claim touches.
   - "branchId": the id of the branch it belongs to, when one fits.
   - "suggestedQuery": a web search query that could resolve it: 3 to 12 plain keywords, no quotation marks or operators, including the institution or program name and the year where relevant.
+  - "label": 2 to 4 words naming what is still unknown, like a place name on a map (for example "Food permit cost", "CRF deadline", "HAF status"). No quotation marks and no ending punctuation.
 
 "claimGroups": groups of 2 or more claim ids.
   - {"status": "corroborated", "claimIds": [...]}: claims that assert the SAME fact (the same number, date or rule), usually from different sources. A shared topic is not enough.
@@ -162,7 +164,7 @@ Return a JSON object with four arrays.
   Be conservative: never connect claims just because they share words or a topic. Use [] when there is no meaningful link.
 
 Output exactly this shape:
-{"gaps": [{"kind": "missing", "question": "...", "whyItMatters": "...", "claimIds": [], "branchId": "...", "suggestedQuery": "..."}], "claimGroups": [{"status": "corroborated", "claimIds": ["...", "..."]}], "outdated": [{"claimId": "...", "reason": "..."}], "connections": [{"from": "...", "to": "...", "relationship": "depends_on", "explanation": "..."}]}`;
+{"gaps": [{"kind": "missing", "question": "...", "whyItMatters": "...", "claimIds": [], "branchId": "...", "suggestedQuery": "...", "label": "..."}], "claimGroups": [{"status": "corroborated", "claimIds": ["...", "..."]}], "outdated": [{"claimId": "...", "reason": "..."}], "connections": [{"from": "...", "to": "...", "relationship": "depends_on", "explanation": "..."}]}`;
 
 export interface AnalyzePromptClaim {
   id: string;

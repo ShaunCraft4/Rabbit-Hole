@@ -5,17 +5,25 @@
 import { InvestigationSchema, investigationIntegrityIssues } from "@/lib/contracts";
 import type { Investigation } from "@/lib/types";
 
+import demoRaw from "./demo-investigation.json";
 import raw from "./mock-investigation.json";
 
-function parseMockInvestigation(): Investigation {
-  // Throws at import time if the fixture ever drifts from the contracts.
-  const inv = InvestigationSchema.parse(raw);
+function parseInvestigation(data: unknown, file: string): Investigation {
+  // Throws at import time if a fixture ever drifts from the contracts.
+  const inv = InvestigationSchema.parse(data);
   const issues = investigationIntegrityIssues(inv);
   if (issues.length > 0) {
-    throw new Error(`mock-investigation.json has broken references: ${issues.join("; ")}`);
+    throw new Error(`${file} has broken references: ${issues.join("; ")}`);
   }
   return inv;
 }
 
 /** A complete, fictional Investigation ("_mock" stripped), validated against InvestigationSchema. */
-export const mockInvestigation: Investigation = parseMockInvestigation();
+export const mockInvestigation: Investigation = parseInvestigation(raw, "mock-investigation.json");
+
+/**
+ * A real saved run (the UCR club cultural-night question) with model-written node labels: the
+ * demo fallback. Copy the JSON file to public/demo-investigation.json; re-export another run with
+ * `npx tsx scripts/export-demo.ts out/<slug>.json`.
+ */
+export const demoInvestigation: Investigation = parseInvestigation(demoRaw, "demo-investigation.json");

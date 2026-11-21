@@ -16,6 +16,7 @@ import { createHash, randomBytes } from "node:crypto";
 
 import { LIMITS, type AnalyzeRequest, type AnalyzeResponse, type ClaimUpdate, type PublicSource } from "@/lib/contracts";
 import { focusTerms } from "@/lib/research/text";
+import { fallbackLabel } from "@/lib/skilltree/labels";
 import type { Claim, Connection, EvidenceStatus, Gap } from "@/lib/types";
 
 import { callJSON } from "./client";
@@ -209,6 +210,7 @@ export function buildAnalysis(raw: AnalyzeModelOutput, req: AnalyzeRequest): Ana
       claimIds: g.claimIds.slice(0, LIMITS.maxGapClaimIds),
       ...(g.suggestedQuery ? { suggestedQuery: g.suggestedQuery } : {}),
       status: "open",
+      label: g.label ?? fallbackLabel(g.question),
     });
   }
 
