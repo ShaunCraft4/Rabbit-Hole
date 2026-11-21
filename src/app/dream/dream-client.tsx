@@ -4,7 +4,10 @@ import { useEffect, useState, useSyncExternalStore, type FormEvent } from "react
 import { useRouter, useSearchParams } from "next/navigation";
 
 import { GraphCanvas } from "@/components/graph/GraphCanvas";
+import { ListView } from "@/components/list/ListView";
+import { CheshirePanel } from "@/components/panels/CheshirePanel";
 import { DiscoveryPanel } from "@/components/panels/DiscoveryPanel";
+import { WorkspaceHeader } from "@/components/panels/WorkspaceHeader";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
@@ -13,6 +16,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { ApiClientError } from "@/lib/client/api";
 import { runResearchAll } from "@/lib/client/runner";
 import { LIMITS } from "@/lib/contracts";
+import { branchNodeId } from "@/lib/graph/build";
 import type { BranchStatus } from "@/lib/types";
 import { useInvestigationStore } from "@/stores/investigation";
 
@@ -374,11 +378,16 @@ function PlanningView({
 function WorkspaceView({ flowError }: { flowError: string | null }) {
   const investigation = useInvestigationStore((state) => state.investigation);
   const branchErrors = useInvestigationStore((state) => state.branchErrors);
+  const selectedNodeId = useInvestigationStore((state) => state.selectedNodeId);
+  const setSelected = useInvestigationStore((state) => state.setSelected);
+  const view = useInvestigationStore((state) => state.view);
   if (!investigation) return null;
 
   return (
-    <div className="fall-in flex min-h-dvh flex-col lg:h-dvh lg:flex-row lg:overflow-hidden">
-      <aside className="flex flex-col gap-6 border-b border-border bg-wonderland/35 p-5 lg:h-dvh lg:w-80 lg:shrink-0 lg:overflow-y-auto lg:border-r lg:border-b-0">
+    <div className="fall-in flex min-h-dvh flex-col lg:h-dvh">
+      <WorkspaceHeader />
+      <div className="flex flex-1 flex-col lg:min-h-0 lg:flex-row lg:overflow-hidden">
+      <aside className="flex flex-col gap-6 border-b border-border bg-wonderland/35 p-5 lg:w-80 lg:shrink-0 lg:overflow-y-auto lg:border-r lg:border-b-0">
         <div className="flex flex-col gap-2">
           <p className="font-mono text-xs tracking-[0.18em] text-golden uppercase">The White Rabbit</p>
           <h1 className="font-heading text-3xl leading-snug break-words text-paper">{investigation.question}</h1>
@@ -389,10 +398,20 @@ function WorkspaceView({ flowError }: { flowError: string | null }) {
             Doors
           </h2>
           <ul className="flex flex-col gap-3" aria-live="polite">
-            {investigation.branches.map((branch) => (
+            {investigation.branches.map((branch) => {
+              const nodeId = branchNodeId(branch.id);
+              const selected = selectedNodeId === nodeId;
+              return (
               <li key={branch.id} className="flex flex-col gap-1">
                 <div className="flex items-start justify-between gap-3">
-                  <span className="text-sm leading-5 text-paper">{branch.title}</span>
+                  <button
+                    type="button"
+                    className={`cursor-pointer rounded-md text-left text-sm leading-5 focus-visible:ring-2 focus-visible:ring-golden focus-visible:outline-none ${selected ? "text-golden" : "text-paper"}`}
+                    aria-current={selected ? "true" : undefined}
+                    onClick={() => setSelected(nodeId)}
+                  >
+                    {branch.title}
+                  </button>
                   <StatusChip status={branch.status} />
                 </div>
                 {branchErrors[branch.id] ? (
@@ -401,9 +420,12 @@ function WorkspaceView({ flowError }: { flowError: string | null }) {
                   </p>
                 ) : null}
               </li>
-            ))}
+              );
+            })}
           </ul>
         </section>
+
+        <CheshirePanel />
 
         {flowError ? (
           <p role="alert" className="text-sm text-destructive">
@@ -421,13 +443,16 @@ function WorkspaceView({ flowError }: { flowError: string | null }) {
         </div>
       </aside>
 
-      <main className="min-h-[50vh] min-w-0 flex-1 lg:min-h-0">
-        <GraphCanvas />
+      <main className="flex min-h-[50vh] min-w-0 flex-1 flex-col lg:min-h-0">
+        <div className="min-h-[50vh] flex-1 lg:min-h-0">
+          {view === "list" ? <ListView /> : <GraphCanvas />}
+        </div>
       </main>
 
-      <aside className="border-t border-border bg-looking-glass/25 lg:h-dvh lg:w-80 lg:shrink-0 lg:overflow-y-auto lg:border-t-0 lg:border-l">
+      <aside className="border-t border-border bg-looking-glass/25 lg:w-96 lg:shrink-0 lg:overflow-y-auto lg:border-t-0 lg:border-l">
         <DiscoveryPanel />
       </aside>
+      </div>
     </div>
   );
 }

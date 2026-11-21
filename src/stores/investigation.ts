@@ -369,6 +369,14 @@ export const useInvestigationStore = create<InvestigationState>()(
         set((state) => {
           if (!state.investigation) return state;
           const updates = new Map(response.claimUpdates.map((update) => [update.claimId, update.evidenceStatus]));
+          // Gap ids and connection ids are stable across re-analysis. Keep the user's
+          // resolve/dismiss choice and accepted links; evidence labels are recomputed.
+          const previousGapStatus = new Map(state.investigation.gaps.map((gap) => [gap.id, gap.status]));
+          const acceptedConnectionIds = new Set(
+            state.investigation.connections
+              .filter((connection) => connection.accepted === true)
+              .map((connection) => connection.id),
+          );
           return {
             phase: "analyzed",
             investigation: {
@@ -377,8 +385,13 @@ export const useInvestigationStore = create<InvestigationState>()(
                 const evidenceStatus = updates.get(claim.id);
                 return evidenceStatus ? { ...claim, evidenceStatus } : claim;
               }),
-              gaps: response.gaps,
-              connections: response.connections,
+              gaps: response.gaps.map((gap) => {
+                const status = previousGapStatus.get(gap.id);
+                return status ? { ...gap, status } : gap;
+              }),
+              connections: response.connections.map((connection) =>
+                acceptedConnectionIds.has(connection.id) ? { ...connection, accepted: true } : connection,
+              ),
             },
           };
         }),
