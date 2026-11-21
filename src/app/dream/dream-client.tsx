@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useSyncExternalStore, type FormEvent } from "react";
+import { useEffect, useState, useSyncExternalStore, type FormEvent, type ReactNode } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 
 import { GraphCanvas } from "@/components/graph/GraphCanvas";
@@ -85,7 +85,7 @@ function errorMessage(error: unknown): string {
   return "The investigation could not be finished.";
 }
 
-export function DreamWorkspace() {
+export function DreamWorkspace({ goldenKey }: { goldenKey: ReactNode }) {
   const router = useRouter();
   const hydrated = useInvestigationHydrated();
   const investigation = useInvestigationStore((state) => state.investigation);
@@ -116,7 +116,7 @@ export function DreamWorkspace() {
     return <PlanningView opening={opening} flowError={flowError} onOpen={() => void openDoors()} />;
   }
 
-  return <WorkspaceView flowError={flowError} />;
+  return <WorkspaceView flowError={flowError} goldenKey={goldenKey} />;
 }
 
 function StatusChip({ status }: { status: BranchStatus }) {
@@ -375,7 +375,7 @@ function PlanningView({
   );
 }
 
-function WorkspaceView({ flowError }: { flowError: string | null }) {
+function WorkspaceView({ flowError, goldenKey }: { flowError: string | null; goldenKey: ReactNode }) {
   const investigation = useInvestigationStore((state) => state.investigation);
   const branchErrors = useInvestigationStore((state) => state.branchErrors);
   const selectedNodeId = useInvestigationStore((state) => state.selectedNodeId);
@@ -433,14 +433,7 @@ function WorkspaceView({ flowError }: { flowError: string | null }) {
           </p>
         ) : null}
 
-        <div className="mt-auto flex flex-col gap-2 pt-4">
-          <Button type="button" className="cursor-pointer" disabled>
-            Unlock the Golden Key
-          </Button>
-          <p className="text-xs leading-5 text-paper/60">
-            Placeholder. The Golden Key report opens in a later step.
-          </p>
-        </div>
+        <div className="mt-auto pt-4">{goldenKey}</div>
       </aside>
 
       <main className="flex min-h-[50vh] min-w-0 flex-1 flex-col lg:min-h-0">

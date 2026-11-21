@@ -1,0 +1,47 @@
+.wake {
+  position: relative;
+  isolation: isolate;
+  animation: wake 1s ease-out both;
+}
+
+.wake::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background: radial-gradient(ellipse 70% 38% at 50% 0%, rgb(214 183 107 / 0.45), transparent 70%);
+  animation: glow 1.2s ease-out both;
+}
+
+@keyframes wake {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes glow {
+  0% {
+    opacity: 0;
+  }
+  35% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .wake,
+  .wake::before {
+    animation: none;
+  }
+
+  .wake::before {
+    content: none;
+  }
+}
