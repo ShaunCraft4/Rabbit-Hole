@@ -1,158 +1,243 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState, type MouseEvent } from "react";
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import {
   Background,
   Controls,
   ReactFlow,
   ReactFlowProvider,
   useReactFlow,
-  type NodeChangeset,
+  useViewport,
+  type Viewport,
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
 
 import { Button } from "@/components/ui/button";
-import { buildGraph, type GraphEdge, type GraphNode } from "@/lib/graph/build";
-import { layoutGraph, layoutSignature } from "@/lib/graph/layout";
+import { buildNodePage, buildSkillTree, type SkillTree } from "@/lib/skilltree";
 import { useInvestigationStore } from "@/stores/investigation";
 
-import { nodeTypes } from "./nodes/node-types";
+import { SkillTreeUiProvider, type SkillTreeUi } from "./skilltree/context";
+import { skillNodeTypes } from "./skilltree/node-types";
+import type { SkillFlowNode } from "./skilltree/nodes";
+import { NodePage } from "./skilltree/NodePage";
+import { SkillBackdrop } from "./skilltree/SkillBackdrop";
 
-type Point = { x: number; y: number };
-type DragState = { key: string; positions: Map<string, Point> };
+function motionDuration(ms: number): number {
+  return window.matchMedia("(prefers-reduced-motion: reduce)").matches ? 0 : ms;
+}
 
-const FIT_PADDING = { top: "20px", right: "24px", bottom: "28px", left: "16px" } as const;
-const EMPTY_DRAGS = new Map<string, Point>();
-
-function prefersReducedMotion(): boolean {
-  return window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+function relatedIds(tree: SkillTree, selectedId: string | null): Set<string> | null {
+  if (!selectedId || !tree.nodes.some((node) => node.id === selectedId)) return null;
+  const related = new Set<string>([selectedId]);
+  for (const trail of tree.trails) {
+    if (trail.from === selectedId || trail.to === selectedId) {
+      related.add(trail.from);
+      related.add(trail.to);
+    }
+  }
+  return related;
 }
 
 function GraphView() {
   const investigation = useInvestigationStore((state) => state.investigation);
   const selectedNodeId = useInvestigationStore((state) => state.selectedNodeId);
-  const collapsedBranchIds = useInvestigationStore((state) => state.collapsedBranchIds);
   const setSelected = useInvestigationStore((state) => state.setSelected);
-  const toggleCollapsed = useInvestigationStore((state) => state.toggleCollapsed);
   const [showGaps, setShowGaps] = useState(true);
-  const [layoutEpoch, setLayoutEpoch] = useState(0);
-  const [dragState, setDragState] = useState<DragState>({ key: "", positions: new Map() });
-  const fittedCount = useRef<number | null>(null);
-  const { fitView } = useReactFlow();
+  const [hoveredId, setHoveredIdState] = useState<string | null>(null);
+  const [pageNodeId, setPageNodeId] = useState<string | null>(null);
+  const [pageActive, setPageActive] = useState(false);
+  const [fitTick, setFitTick] = useState(0);
 
-  const model = useMemo(() => {
-    if (!investigation) {
-      return {
-        nodes: [] as GraphNode[],
-        edges: [] as GraphEdge[],
-        key: "empty",
-        verifiedClaims: 0,
-        running: false,
-        gapCount: 0,
-      };
-    }
-    const built = buildGraph(investigation, {
-      collapsedBranchIds,
-      selectedNodeId,
-      showGaps,
-    });
-    const key = layoutSignature(
-      built.nodes.map((node) => node.id),
-      collapsedBranchIds,
-      layoutEpoch,
-    );
-    return {
-      nodes: layoutGraph(built.nodes, built.edges, key),
-      edges: built.edges,
-      key,
-      verifiedClaims: investigation.claims.filter((claim) => claim.verified).length,
-      running: investigation.branches.some((branch) => branch.status === "running"),
-      gapCount: investigation.gaps.filter((gap) => gap.status !== "dismissed").length,
-    };
-  }, [investigation, collapsedBranchIds, selectedNodeId, showGaps, layoutEpoch]);
+  const flow = useReactFlow();
+  const api = useRef(flow);
+  const { zoom } = useViewport();
+  const showMinorLabels = zoom >= 0.7;
 
-  const dragPositions = dragState.key === model.key ? dragState.positions : EMPTY_DRAGS;
+  const tree = useMemo(() => {
+    if (!investigation) return null;
+    return buildSkillTree(investigation, { showGaps });
+  }, [investigation, showGaps]);
 
-  const nodes = useMemo(() => {
-    if (dragPositions.size === 0) return model.nodes;
-    return model.nodes.map((node) => {
-      const position = dragPositions.get(node.id);
-      return position ? { ...node, position } : node;
-    });
-  }, [model.nodes, dragPositions]);
+  const treeRef = useRef(tree);
+  const pageNodeIdRef = useRef(pageNodeId);
+  const pageOpenRef = useRef(false);
 
-  const nodeCount = nodes.length;
+  useLayoutEffect(() => {
+    api.current = flow;
+    treeRef.current = tree;
+    pageNodeIdRef.current = pageNodeId;
+  }, [flow, tree, pageNodeId]);
+  const openedByUs = useRef<string | null>(null);
+  const backRef = useRef<Viewport | null>(null);
+  const cameraGen = useRef(0);
+  const fitGen = useRef(0);
+  const seenLayout = useRef<string | null>(null);
+  const ready = useRef(false);
 
-  useEffect(() => {
-    if (nodeCount === 0 || fittedCount.current === nodeCount) return;
-    fittedCount.current = nodeCount;
-    const duration = prefersReducedMotion() ? 0 : 450;
-    const timer = window.setTimeout(() => {
-      void fitView({ padding: FIT_PADDING, duration });
-    }, 40);
-    return () => window.clearTimeout(timer);
-  }, [nodeCount, fitView]);
+  const page = useMemo(() => {
+    if (!investigation || !tree || !pageNodeId) return null;
+    return buildNodePage(investigation, tree, pageNodeId);
+  }, [investigation, tree, pageNodeId]);
 
-  const onNodesChange = useCallback(
-    (changes: NodeChangeset<GraphNode>) => {
-      const updates = changes.getByType("position");
-      if (updates.length === 0) return;
-      setDragState((current) => {
-        const base = current.key === model.key ? new Map(current.positions) : new Map<string, Point>();
-        let changed = false;
-        for (const update of updates) {
-          if (!update.position) continue;
-          const previous = base.get(update.id);
-          if (previous && previous.x === update.position.x && previous.y === update.position.y) continue;
-          base.set(update.id, update.position);
-          changed = true;
-        }
-        if (!changed && current.key === model.key) return current;
-        return { key: model.key, positions: base };
+  const related = pageActive && tree ? relatedIds(tree, selectedNodeId) : null;
+
+  const flowNodes = useMemo((): SkillFlowNode[] => {
+    if (!tree) return [];
+    const hot = pageActive ? relatedIds(tree, selectedNodeId) : null;
+    return tree.nodes.map((node) => ({
+      id: node.id,
+      type: node.kind,
+      position: { x: node.x, y: node.y },
+      data: { ...node, dimmed: hot !== null && !hot.has(node.id) } as SkillFlowNode["data"],
+      width: node.r * 2,
+      height: node.r * 2,
+      style: { width: node.r * 2, height: node.r * 2 },
+      draggable: false,
+      connectable: false,
+      selectable: true,
+      focusable: false,
+      selected: node.id === selectedNodeId,
+      zIndex: 10,
+    }));
+  }, [tree, selectedNodeId, pageActive]);
+
+  const openNode = useCallback(
+    (id: string) => {
+      const node = treeRef.current?.nodes.find((item) => item.id === id);
+      if (!node) return;
+      const gen = ++cameraGen.current;
+      fitGen.current += 1;
+      ready.current = true;
+      openedByUs.current = id;
+      if (!pageOpenRef.current) {
+        backRef.current = api.current.getViewport();
+      }
+      pageOpenRef.current = true;
+      setPageActive(true);
+      setSelected(id);
+      const duration = motionDuration(700);
+      void api.current.setCenter(node.focus.x, node.focus.y, { zoom: node.focus.zoom, duration }).then(() => {
+        if (cameraGen.current !== gen) return;
+        pageNodeIdRef.current = id;
+        setPageNodeId(id);
       });
-    },
-    [model.key],
-  );
-
-  const onNodeClick = useCallback(
-    (_event: MouseEvent, node: GraphNode) => {
-      setSelected(node.id);
     },
     [setSelected],
   );
 
-  const onNodeDoubleClick = useCallback(
-    (_event: MouseEvent, node: GraphNode) => {
-      if (node.type !== "branch") return;
-      toggleCollapsed(node.data.branchId);
-    },
-    [toggleCollapsed],
+  const closePage = useCallback(() => {
+    if (!pageOpenRef.current && pageNodeIdRef.current === null) return;
+    const gen = ++cameraGen.current;
+    const id = openedByUs.current;
+    pageNodeIdRef.current = null;
+    setPageNodeId(null);
+    setPageActive(false);
+    const duration = motionDuration(600);
+    const back = backRef.current;
+    const current = treeRef.current;
+    const finish = () => {
+      if (cameraGen.current !== gen) return;
+      pageOpenRef.current = false;
+      if (id) document.getElementById(`skill-node-${id}`)?.focus({ preventScroll: true });
+    };
+    if (back) {
+      void api.current.setViewport(back, { duration }).then(finish);
+    } else if (current) {
+      void api.current.fitBounds(current.bounds, { padding: 0.08, duration }).then(finish);
+    } else {
+      finish();
+    }
+  }, []);
+
+  const onFit = useCallback(() => {
+    const current = treeRef.current;
+    if (!current) return;
+    const gen = ++cameraGen.current;
+    fitGen.current += 1;
+    pageNodeIdRef.current = null;
+    setPageNodeId(null);
+    setPageActive(false);
+    void api.current.fitBounds(current.bounds, { padding: 0.08, duration: motionDuration(450) }).then(() => {
+      if (cameraGen.current !== gen) return;
+      pageOpenRef.current = false;
+      backRef.current = api.current.getViewport();
+    });
+  }, []);
+
+  useEffect(() => {
+    const current = treeRef.current;
+    if (!current) return;
+    if (seenLayout.current === current.layoutKey) return;
+    seenLayout.current = current.layoutKey;
+    if (pageOpenRef.current) return;
+    const gen = ++fitGen.current;
+    let cancel = false;
+    void api.current.fitBounds(current.bounds, { padding: 0.08, duration: motionDuration(450) }).finally(() => {
+      if (cancel || fitGen.current !== gen) return;
+      ready.current = true;
+      setFitTick((tick) => tick + 1);
+    });
+    return () => {
+      cancel = true;
+    };
+  }, [tree?.layoutKey]);
+
+  useEffect(() => {
+    if (!selectedNodeId) {
+      openedByUs.current = null;
+      return;
+    }
+    if (!ready.current) return;
+    if (openedByUs.current === selectedNodeId) return;
+    if (!treeRef.current?.nodes.some((node) => node.id === selectedNodeId)) return;
+    openNode(selectedNodeId);
+  }, [selectedNodeId, fitTick, openNode]);
+
+  useEffect(() => {
+    if (!pageNodeId || !tree) return;
+    if (tree.nodes.some((node) => node.id === pageNodeId)) return;
+    closePage();
+  }, [pageNodeId, tree, closePage]);
+
+  useEffect(() => {
+    if (!pageActive) return;
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key !== "Escape") return;
+      event.preventDefault();
+      closePage();
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [pageActive, closePage]);
+
+  const setHoveredId = useCallback((id: string | null) => {
+    setHoveredIdState((current) => (current === id ? current : id));
+  }, []);
+
+  const ui = useMemo<SkillTreeUi>(
+    () => ({ openNode, setHoveredId, showMinorLabels }),
+    [openNode, setHoveredId, showMinorLabels],
   );
 
   const onPaneClick = useCallback(() => {
+    if (pageOpenRef.current) {
+      closePage();
+      return;
+    }
+    openedByUs.current = null;
     setSelected(null);
-  }, [setSelected]);
+  }, [closePage, setSelected]);
 
-  const onFit = useCallback(() => {
-    void fitView({ padding: FIT_PADDING, duration: prefersReducedMotion() ? 0 : 400 });
-  }, [fitView]);
-
-  const onReset = useCallback(() => {
-    setLayoutEpoch((epoch) => epoch + 1);
-  }, []);
-
-  const onToggleGaps = useCallback(() => {
-    setShowGaps((current) => !current);
-  }, []);
-
-  const doorsOpening = model.verifiedClaims === 0 && model.running;
+  const gapCount = investigation?.gaps.filter((gap) => gap.status !== "dismissed").length ?? 0;
+  const running = investigation?.branches.some((branch) => branch.status === "running") ?? false;
+  const verifiedClaims = investigation?.claims.filter((claim) => claim.verified).length ?? 0;
+  const doorsOpening = verifiedClaims === 0 && running;
   const settledQuiet =
     investigation !== null &&
-    !model.running &&
-    model.verifiedClaims === 0 &&
+    !running &&
+    verifiedClaims === 0 &&
     investigation.branches.length > 0 &&
     investigation.branches.every((branch) => branch.status === "done" || branch.status === "failed");
-  const gapsDisabled = model.gapCount === 0 || model.verifiedClaims === 0;
 
   return (
     <section aria-label="Investigation map" className="relative flex h-full min-h-[50vh] w-full flex-col">
@@ -160,54 +245,57 @@ function GraphView() {
         <Button type="button" size="sm" variant="outline" className="cursor-pointer bg-midnight/80" onClick={onFit}>
           Fit view
         </Button>
-        <Button type="button" size="sm" variant="outline" className="cursor-pointer bg-midnight/80" onClick={onReset}>
-          Reset layout
-        </Button>
         <Button
           type="button"
           size="sm"
           variant="outline"
           className="cursor-pointer bg-midnight/80"
           aria-pressed={showGaps}
-          disabled={gapsDisabled}
-          onClick={onToggleGaps}
+          disabled={gapCount === 0}
+          onClick={() => setShowGaps((current) => !current)}
         >
           {showGaps ? "Hide gaps" : "Show gaps"}
         </Button>
       </div>
 
       <div className="relative min-h-0 flex-1">
-        <div className="absolute inset-0">
-          <ReactFlow
-            className="h-full w-full"
-            nodes={nodes}
-            edges={model.edges}
-            nodeTypes={nodeTypes}
-            onNodesChange={onNodesChange}
-            onNodeClick={onNodeClick}
-            onNodeDoubleClick={onNodeDoubleClick}
-            onPaneClick={onPaneClick}
-            nodesConnectable={false}
-            edgesReconnectable={false}
-            deleteKeyCode={null}
-            selectionKeyCode={null}
-            multiSelectionKeyCode={null}
-            zoomOnDoubleClick={false}
-            minZoom={0.25}
-            maxZoom={1.75}
-            forceColorMode="dark"
-          >
-            <Background bgColor="transparent" color="rgba(229, 225, 240, 0.16)" gap={26} size={1.1} />
-            <Controls showInteractive={false} showFitView={false} aria-label="Zoom" />
-          </ReactFlow>
-        </div>
+        <SkillTreeUiProvider value={ui}>
+          <div className="absolute inset-0">
+            <ReactFlow
+              className="skill-flow h-full w-full"
+              nodes={flowNodes}
+              edges={[]}
+              nodeTypes={skillNodeTypes}
+              nodeOrigin={[0.5, 0.5]}
+              onPaneClick={onPaneClick}
+              nodesDraggable={false}
+              nodesConnectable={false}
+              nodesFocusable={false}
+              elementsSelectable
+              autoPanOnNodeFocus={false}
+              edgesReconnectable={false}
+              deleteKeyCode={null}
+              selectionKeyCode={null}
+              multiSelectionKeyCode={null}
+              zoomOnDoubleClick={false}
+              selectionOnDrag={false}
+              minZoom={0.2}
+              maxZoom={3}
+              zIndexMode="manual"
+              forceColorMode="dark"
+              proOptions={{ hideAttribution: true }}
+            >
+              <Background bgColor="transparent" color="rgba(229, 225, 240, 0.16)" gap={26} size={1.1} />
+              <Controls showInteractive={false} showFitView={false} aria-label="Zoom" />
+              {tree ? <SkillBackdrop tree={tree} selectedId={selectedNodeId} hoveredId={hoveredId} related={related} /> : null}
+            </ReactFlow>
+          </div>
+          {page ? <NodePage page={page} onOpen={openNode} onZoomOut={closePage} /> : null}
+        </SkillTreeUiProvider>
       </div>
 
       {doorsOpening ? (
-        <p
-          className="pointer-events-none absolute bottom-6 left-1/2 z-10 -translate-x-1/2 text-sm text-paper/70"
-          aria-live="polite"
-        >
+        <p className="pointer-events-none absolute bottom-6 left-1/2 z-10 -translate-x-1/2 text-sm text-paper/70" aria-live="polite">
           The doors are opening…
         </p>
       ) : null}

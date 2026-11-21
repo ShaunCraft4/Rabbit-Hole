@@ -465,9 +465,11 @@ function WorkspaceView({ flowError, goldenKey }: { flowError: string | null; gol
         </div>
       </main>
 
-      <aside className="border-t border-border bg-looking-glass/25 xl:w-80 xl:shrink-0 xl:overflow-y-auto xl:border-t-0 xl:border-l">
-        <DiscoveryPanel />
-      </aside>
+      {view === "list" ? (
+        <aside className="border-t border-border bg-looking-glass/25 xl:w-80 xl:shrink-0 xl:overflow-y-auto xl:border-t-0 xl:border-l">
+          <DiscoveryPanel />
+        </aside>
+      ) : null}
       </div>
     </div>
   );
