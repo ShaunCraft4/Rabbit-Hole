@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, type FormEvent } from "react";
+import { useEffect, useState, useSyncExternalStore, type FormEvent } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 
 import { GraphCanvas } from "@/components/graph/GraphCanvas";
@@ -25,21 +25,25 @@ const STATUS_LABEL: Record<BranchStatus, string> = {
 
 let rehydrateStarted = false;
 
+function subscribeHydration(onStoreChange: () => void): () => void {
+  return useInvestigationStore.persist.onFinishHydration(onStoreChange);
+}
+
+function hydrationSnapshot(): boolean {
+  return useInvestigationStore.persist.hasHydrated();
+}
+
+function hydrationServerSnapshot(): boolean {
+  return false;
+}
+
 function useInvestigationHydrated(): boolean {
-  const [hydrated, setHydrated] = useState(false);
+  const hydrated = useSyncExternalStore(subscribeHydration, hydrationSnapshot, hydrationServerSnapshot);
 
   useEffect(() => {
-    const persistApi = useInvestigationStore.persist;
-    const unsub = persistApi.onFinishHydration(() => setHydrated(true));
-    if (persistApi.hasHydrated()) {
-      setHydrated(true);
-      return unsub;
-    }
-    if (!rehydrateStarted) {
-      rehydrateStarted = true;
-      void persistApi.rehydrate();
-    }
-    return unsub;
+    if (useInvestigationStore.persist.hasHydrated() || rehydrateStarted) return;
+    rehydrateStarted = true;
+    void useInvestigationStore.persist.rehydrate();
   }, []);
 
   return hydrated;
