@@ -1,69 +1,184 @@
-import Image from "next/image";
+"use client";
 
-export default function Home() {
+import { useRef, useState, type FormEvent, type KeyboardEvent } from "react";
+import { useRouter } from "next/navigation";
+
+import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
+import { ApiClientError } from "@/lib/client/api";
+import { runPlan } from "@/lib/client/runner";
+import { InvestigationSchema, LIMITS } from "@/lib/contracts";
+import { mockInvestigation } from "@/fixtures";
+import { useInvestigationStore } from "@/stores/investigation";
+
+const EXAMPLES = [
+  "How can I get funding for a student organization event at UC Riverside?",
+  "What do I need to land an AI research position as a sophomore?",
+  "How do I get funding to study abroad as a UCR undergraduate?",
+] as const;
+
+const FALL_MS = 420;
+
+function errorMessage(error: unknown, fallback: string): string {
+  if (error instanceof ApiClientError) return error.message;
+  if (error instanceof Error && error.message) return error.message;
+  return fallback;
+}
+
+function motionReduced(): boolean {
+  return window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+}
+
+export default function EntrancePage() {
+  const router = useRouter();
+  const loadInvestigation = useInvestigationStore((state) => state.loadInvestigation);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const busy = useRef(false);
+  const [question, setQuestion] = useState("");
+  const [falling, setFalling] = useState(false);
+  const [working, setWorking] = useState<"plan" | "saved" | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  async function fallToDream() {
+    if (motionReduced()) {
+      router.push("/dream");
+      return;
+    }
+    setFalling(true);
+    await new Promise((resolve) => setTimeout(resolve, FALL_MS));
+    router.push("/dream");
+  }
+
+  async function onSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const dream = question.trim();
+    if (!dream || busy.current) return;
+    busy.current = true;
+    setWorking("plan");
+    setError(null);
+    try {
+      await runPlan(dream);
+      await fallToDream();
+    } catch (caught) {
+      setFalling(false);
+      setError(errorMessage(caught, "The rabbit hole didn't open. Try again in a moment."));
+      busy.current = false;
+      setWorking(null);
+    }
+  }
+
+  async function onLoadSaved() {
+    if (busy.current) return;
+    busy.current = true;
+    setWorking("saved");
+    setError(null);
+    try {
+      let investigation = mockInvestigation;
+      try {
+        const response = await fetch("/demo-investigation.json", { cache: "no-store" });
+        if (!response.ok) throw new Error("missing");
+        investigation = InvestigationSchema.parse(await response.json());
+      } catch {
+        investigation = mockInvestigation;
+      }
+      loadInvestigation(investigation);
+      await fallToDream();
+    } catch (caught) {
+      setFalling(false);
+      setError(errorMessage(caught, "The saved example could not be opened."));
+      busy.current = false;
+      setWorking(null);
+    }
+  }
+
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert h-5 w-[100px]"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the{" "}
-            <code className="rounded bg-black/[.06] px-1.5 py-0.5 font-mono text-[0.9em] dark:bg-white/[.08]">
-              page.tsx
-            </code>{" "}
-            file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
+    <main
+      className={`mx-auto flex w-full max-w-2xl flex-1 flex-col justify-center gap-8 px-5 py-16 ${falling ? "fall-out" : "fall-in"}`}
+    >
+      <header className="flex flex-col gap-3 text-center">
+        <p className="font-mono text-xs tracking-[0.22em] text-golden uppercase">Rabbit Hole</p>
+        <h1 className="font-heading text-5xl leading-tight text-paper sm:text-6xl">What dream are you chasing?</h1>
+        <p className="text-base text-paper/75 sm:text-lg">
+          Describe a goal, plan, or question. We&apos;ll find the way down.
+        </p>
+      </header>
+
+      <form onSubmit={onSubmit} className="flex flex-col gap-4">
+        <div className="flex flex-col gap-2">
+          <label htmlFor="dream" className="text-sm text-paper/80">
+            Your dream
+          </label>
+          <Textarea
+            ref={textareaRef}
+            id="dream"
+            name="dream"
+            value={question}
+            maxLength={LIMITS.questionChars}
+            placeholder="A goal, a plan, or a question you can't quite see clearly yet."
+            disabled={working !== null}
+            className="min-h-32 bg-wonderland/40 text-base md:text-base"
+            onChange={(event) => setQuestion(event.target.value)}
+            onKeyDown={(event: KeyboardEvent<HTMLTextAreaElement>) => {
+              if (event.key === "Enter" && (event.metaKey || event.ctrlKey)) {
+                event.preventDefault();
+                event.currentTarget.form?.requestSubmit();
+              }
+            }}
+          />
+          <p className="font-mono text-xs text-paper/50">
+            {question.length} / {LIMITS.questionChars}
           </p>
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert h-[14px] w-4"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={14}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
-      </main>
-    </div>
+
+        {error ? (
+          <p role="alert" className="text-sm text-destructive">
+            {error}
+          </p>
+        ) : null}
+
+        <Button
+          type="submit"
+          size="lg"
+          className="h-12 cursor-pointer px-6 text-base"
+          disabled={working !== null || question.trim().length === 0}
+        >
+          {working === "plan" ? "Falling…" : "Fall down the rabbit hole"}
+        </Button>
+      </form>
+
+      <section className="flex flex-col gap-3" aria-labelledby="examples-heading">
+        <h2 id="examples-heading" className="text-sm text-paper/70">
+          Or try one of these
+        </h2>
+        <ul className="flex flex-col gap-2">
+          {EXAMPLES.map((example) => (
+            <li key={example}>
+              <button
+                type="button"
+                className="w-full cursor-pointer rounded-xl border border-paper/15 bg-wonderland/40 px-4 py-3 text-left text-sm leading-6 text-paper transition hover:border-golden/60 focus-visible:ring-2 focus-visible:ring-golden focus-visible:outline-none"
+                onClick={() => {
+                  setQuestion(example);
+                  textareaRef.current?.focus();
+                }}
+              >
+                {example}
+              </button>
+            </li>
+          ))}
+        </ul>
+      </section>
+
+      <div className="flex flex-col items-center gap-1">
+        <button
+          type="button"
+          className="cursor-pointer text-sm text-paper/70 underline-offset-4 hover:text-paper hover:underline focus-visible:ring-2 focus-visible:ring-golden focus-visible:outline-none disabled:opacity-50"
+          disabled={working !== null}
+          onClick={() => void onLoadSaved()}
+        >
+          {working === "saved" ? "Opening the example…" : "Load saved dream"}
+        </button>
+        <p className="text-xs text-paper/50">A saved example, not a live search.</p>
+      </div>
+    </main>
   );
 }
