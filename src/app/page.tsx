@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { toast } from "sonner";
 
+import { DreamBackdrop } from "@/components/DreamBackdrop";
 import { DREAM, DreamScene } from "@/components/DreamScene";
 import { HistorySidebar } from "@/components/history/HistorySidebar";
 import { Button } from "@/components/ui/button";
@@ -124,6 +125,8 @@ export default function EntrancePage() {
   }
 
   return (
+    <>
+    <DreamBackdrop />
     <DreamScene className="dream-rise flex flex-1">
     <HistorySidebar onNewDream={newDream} />
     <div className="flex min-w-0 flex-1 flex-col">
@@ -221,5 +224,6 @@ export default function EntrancePage() {
     </motion.main>
     </div>
     </DreamScene>
+    </>
   );
 }

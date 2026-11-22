@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 
 import { AskAnotherQuestion } from "@/components/AskAnotherQuestion";
+import { DreamBackdrop } from "@/components/DreamBackdrop";
 import { GraphCanvas } from "@/components/graph/GraphCanvas";
 import { ListView } from "@/components/list/ListView";
 import { BranchActivity } from "@/components/panels/BranchActivity";
@@ -126,7 +127,10 @@ export function DreamWorkspace({ goldenKey }: { goldenKey: ReactNode }) {
     <>
       <ArrivalVeil />
       {phase === "planning" ? (
-        <PlanningView key={id} opening={openingFor === id} flowError={flowError} onOpen={() => void openDoors(id)} />
+        <>
+          <DreamBackdrop />
+          <PlanningView key={id} opening={openingFor === id} flowError={flowError} onOpen={() => void openDoors(id)} />
+        </>
       ) : (
         <WorkspaceView key={id} flowError={flowError} goldenKey={goldenKey} />
       )}

@@ -3,6 +3,7 @@
 import { useEffect, useSyncExternalStore } from "react";
 import { useRouter } from "next/navigation";
 
+import { DreamBackdrop } from "@/components/DreamBackdrop";
 import { DreamScene } from "@/components/DreamScene";
 import { ReportDocument } from "@/components/report/ReportDocument";
 import { useInvestigationStore } from "@/stores/investigation";
@@ -56,6 +57,8 @@ export default function ReportPage() {
   }
 
   return (
+    <>
+    <DreamBackdrop />
     <DreamScene className="flex flex-1 flex-col">
     <div className={styles.wake}>
       <div className={`${styles.key} print:hidden`} aria-hidden>
@@ -72,5 +75,6 @@ export default function ReportPage() {
       <ReportDocument investigation={investigation} report={report} />
     </div>
     </DreamScene>
+    </>
   );
 }

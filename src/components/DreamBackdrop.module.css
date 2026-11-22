@@ -1,0 +1,160 @@
+.sky {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+/* Soft nebula clouds that breathe and drift very slowly. */
+.cloud {
+  position: absolute;
+  width: 70vmax;
+  height: 70vmax;
+  border-radius: 50%;
+  will-change: transform;
+  animation: drift 48s ease-in-out infinite alternate;
+}
+
+.violet {
+  top: -30vmax;
+  left: -24vmax;
+  background: radial-gradient(circle, rgb(103 80 164 / 0.3), rgb(103 80 164 / 0.08) 45%, transparent 68%);
+}
+
+.teal {
+  right: -28vmax;
+  bottom: -32vmax;
+  background: radial-gradient(circle, rgb(38 68 91 / 0.55), rgb(38 68 91 / 0.14) 45%, transparent 68%);
+  animation-duration: 56s;
+  animation-direction: alternate-reverse;
+}
+
+.gold {
+  top: 8vh;
+  left: 32vw;
+  width: 46vmax;
+  height: 46vmax;
+  background: radial-gradient(circle, rgb(214 183 107 / 0.09), rgb(214 183 107 / 0.03) 40%, transparent 66%);
+  animation-duration: 40s;
+}
+
+@keyframes drift {
+  from {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  50% {
+    transform: translate3d(3vmax, 2vmax, 0) scale(1.06);
+  }
+  to {
+    transform: translate3d(-2vmax, 4vmax, 0) scale(0.97);
+  }
+}
+
+/* Twinkling stars. */
+.star {
+  position: absolute;
+  border-radius: 50%;
+  background: rgb(229 225 240 / 0.85);
+  box-shadow: 0 0 6px rgb(229 225 240 / 0.6);
+  opacity: 0.25;
+  animation: twinkle 5s ease-in-out infinite;
+}
+
+.goldStar {
+  background: rgb(214 183 107 / 0.95);
+  box-shadow: 0 0 7px rgb(214 183 107 / 0.7);
+}
+
+@keyframes twinkle {
+  0%,
+  100% {
+    opacity: 0.15;
+    transform: scale(0.8);
+  }
+  50% {
+    opacity: 0.9;
+    transform: scale(1.15);
+  }
+}
+
+/* A shooting star now and then. */
+.shootingStar {
+  position: absolute;
+  top: 14%;
+  left: 62%;
+  width: 140px;
+  height: 1.5px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, rgb(229 225 240 / 0), rgb(229 225 240 / 0.9));
+  opacity: 0;
+  transform: rotate(-24deg);
+  animation: shoot 14s ease-out 4s infinite;
+}
+
+@keyframes shoot {
+  0% {
+    opacity: 0;
+    transform: rotate(-24deg) translateX(0);
+  }
+  2% {
+    opacity: 1;
+  }
+  7% {
+    opacity: 0;
+    transform: rotate(-24deg) translateX(-360px);
+  }
+  100% {
+    opacity: 0;
+    transform: rotate(-24deg) translateX(-360px);
+  }
+}
+
+/* Faint card suits drifting up through the dream. */
+.suit {
+  position: absolute;
+  color: rgb(214 183 107 / 0.09);
+  font-family: var(--font-cormorant), Georgia, serif;
+  line-height: 1;
+  user-select: none;
+  animation: float 34s ease-in-out infinite;
+}
+
+@keyframes float {
+  0% {
+    opacity: 0;
+    transform: translateY(6vh) rotate(-8deg);
+  }
+  20% {
+    opacity: 1;
+  }
+  80% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-14vh) rotate(10deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cloud,
+  .star,
+  .suit {
+    animation: none;
+  }
+
+  .shootingStar {
+    display: none;
+  }
+
+  .suit {
+    opacity: 0.6;
+  }
+}
+
+@media print {
+  .sky {
+    display: none;
+  }
+}
