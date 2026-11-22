@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 
+import { DREAM } from "@/components/DreamScene";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { ApiClientError } from "@/lib/client/api";
@@ -54,7 +55,7 @@ export function UnlockKeyButton() {
   const disabled = Boolean(locked) || unlocking;
 
   function openWritten() {
-    router.push("/report");
+    router.push("/report", { transitionTypes: [DREAM.wake] });
   }
 
   async function onUnlock() {
@@ -65,7 +66,7 @@ export function UnlockKeyButton() {
     setTooltipOpen(false);
     try {
       await runReport();
-      router.push("/report");
+      router.push("/report", { transitionTypes: [DREAM.wake] });
     } catch (caught) {
       const message = errorMessage(caught);
       if (mounted.current) setError(message);

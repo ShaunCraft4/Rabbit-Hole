@@ -67,7 +67,7 @@ export function NodePage({
       role="dialog"
       aria-modal="false"
       aria-labelledby="skill-node-page-title"
-      className="absolute z-30 flex flex-col overflow-hidden border border-paper/15 bg-wonderland text-paper shadow-2xl max-md:inset-x-0 max-md:bottom-0 max-md:max-h-[40%] max-md:rounded-t-2xl max-md:border-b-0 md:inset-y-3 md:right-3 md:w-[min(24rem,calc(100%-1.5rem))] md:rounded-2xl"
+      className="dream-page-in absolute z-30 flex flex-col overflow-hidden border border-paper/15 bg-wonderland text-paper shadow-2xl max-md:inset-x-0 max-md:bottom-0 max-md:max-h-[40%] max-md:rounded-t-2xl max-md:border-b-0 md:inset-y-3 md:right-3 md:w-[min(24rem,calc(100%-1.5rem))] md:rounded-2xl"
     >
       <div className="h-1 shrink-0" style={{ background: accent }} />
       <span className="mx-auto mt-2 h-1 w-10 shrink-0 rounded-full bg-paper/30 md:hidden" aria-hidden />
@@ -82,16 +82,17 @@ export function NodePage({
             {KIND_LABEL[page.kind]}
           </p>
           <h2
+            key={page.id}
             id="skill-node-page-title"
             ref={headingRef}
             tabIndex={-1}
-            className="font-heading text-2xl leading-snug break-words text-paper outline-none"
+            className="dream-swap font-heading text-2xl leading-snug break-words text-paper outline-none"
           >
             {page.label}
           </h2>
         </div>
       </header>
-      <div className="flex min-h-0 flex-1 flex-col gap-5 overflow-y-auto px-4 pt-1 pb-5">
+      <div key={page.id} className="dream-swap flex min-h-0 flex-1 flex-col gap-5 overflow-y-auto px-4 pt-1 pb-5">
         {page.kind === "start" ? <StartBody page={page} onOpen={onOpen} /> : null}
         {page.kind === "door" ? <DoorBody page={page} onOpen={onOpen} /> : null}
         {page.kind === "finding" ? <FindingBody page={page} onOpen={onOpen} /> : null}

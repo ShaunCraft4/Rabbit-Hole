@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { toast } from "sonner";
 
+import { DREAM, DreamScene } from "@/components/DreamScene";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { ApiClientError } from "@/lib/client/api";
@@ -65,7 +66,7 @@ export default function EntrancePage() {
     }
     setFalling(true);
     await new Promise((resolve) => setTimeout(resolve, FALL_MS));
-    router.push("/dream");
+    router.push("/dream", { transitionTypes: [DREAM.sink] });
   }
 
   async function onSubmit(event: FormEvent<HTMLFormElement>) {
@@ -115,6 +116,7 @@ export default function EntrancePage() {
   }
 
   return (
+    <DreamScene className="dream-rise flex flex-1 flex-col">
     <motion.main
       className="mx-auto flex w-full max-w-2xl flex-1 flex-col justify-center gap-8 px-5 py-16"
       initial={false}
@@ -198,7 +200,7 @@ export default function EntrancePage() {
       <div className="flex flex-col items-center gap-1">
         <button
           type="button"
-          className="cursor-pointer text-sm text-paper/70 underline-offset-4 hover:text-paper hover:underline focus-visible:ring-2 focus-visible:ring-golden focus-visible:outline-none disabled:opacity-50"
+          className="cursor-pointer text-sm text-paper/70 underline-offset-4 transition-colors duration-300 hover:text-paper hover:underline focus-visible:ring-2 focus-visible:ring-golden focus-visible:outline-none disabled:opacity-50"
           disabled={working !== null}
           onClick={() => void onLoadSaved()}
         >
@@ -207,5 +209,6 @@ export default function EntrancePage() {
         <p className="text-xs text-paper/75">A saved example, not a live search.</p>
       </div>
     </motion.main>
+    </DreamScene>
   );
 }

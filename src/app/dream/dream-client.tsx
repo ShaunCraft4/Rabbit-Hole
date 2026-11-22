@@ -264,7 +264,7 @@ function PlanningView({
                   <CardContent>
                     {editingId === branch.id ? (
                       <form
-                        className="flex flex-col gap-3"
+                        className="dream-reveal flex flex-col gap-3"
                         onSubmit={(event) => {
                           event.preventDefault();
                           saveQuestion(branch.id);
@@ -306,7 +306,7 @@ function PlanningView({
                     ) : (
                       <button
                         type="button"
-                        className="w-full cursor-pointer rounded-md text-left text-sm leading-6 text-paper/85 focus-visible:ring-2 focus-visible:ring-golden focus-visible:outline-none"
+                        className="w-full cursor-pointer rounded-md text-left text-sm leading-6 text-paper/85 transition-colors duration-300 hover:text-paper focus-visible:ring-2 focus-visible:ring-golden focus-visible:outline-none"
                         onClick={() => {
                           setEditingId(branch.id);
                           setDraft(branch.question);
@@ -330,7 +330,7 @@ function PlanningView({
           Add a door
         </h2>
         {adding ? (
-          <form onSubmit={saveBranch} className="flex flex-col gap-3">
+          <form onSubmit={saveBranch} className="dream-reveal flex flex-col gap-3">
             <div className="flex flex-col gap-1.5">
               <label htmlFor="door-title" className="text-sm text-paper/80">
                 Title
@@ -417,7 +417,7 @@ function WorkspaceView({ flowError, goldenKey }: { flowError: string | null; gol
   if (!investigation) return null;
 
   return (
-    <div className="flex min-h-dvh flex-col xl:h-dvh">
+    <div className="dream-settle flex min-h-dvh flex-col xl:h-dvh">
       <SavedExampleNote />
       <WorkspaceHeader />
       <div className="flex flex-1 flex-col xl:min-h-0 xl:flex-row xl:overflow-hidden">
@@ -441,7 +441,7 @@ function WorkspaceView({ flowError, goldenKey }: { flowError: string | null; gol
                 <div className="flex items-start justify-between gap-3">
                   <button
                     type="button"
-                    className={`cursor-pointer rounded-md text-left text-sm leading-5 focus-visible:ring-2 focus-visible:ring-golden focus-visible:outline-none ${selected ? "text-golden" : "text-paper"}`}
+                    className={`cursor-pointer rounded-md text-left text-sm leading-5 transition-colors duration-300 hover:text-golden focus-visible:ring-2 focus-visible:ring-golden focus-visible:outline-none ${selected ? "text-golden" : "text-paper"}`}
                     aria-current={selected ? "true" : undefined}
                     onClick={() => setSelected(nodeId)}
                   >
@@ -468,13 +468,13 @@ function WorkspaceView({ flowError, goldenKey }: { flowError: string | null; gol
       </aside>
 
       <main className="flex min-h-[50vh] min-w-0 flex-1 flex-col xl:min-h-0">
-        <div className="min-h-[50vh] flex-1 xl:min-h-0">
+        <div key={view} className="dream-swap min-h-[50vh] flex-1 xl:min-h-0">
           {view === "list" ? <ListView /> : <GraphCanvas />}
         </div>
       </main>
 
       {view === "list" ? (
-        <aside className="border-t border-border bg-looking-glass/25 xl:w-80 xl:shrink-0 xl:overflow-y-auto xl:border-t-0 xl:border-l">
+        <aside className="dream-reveal border-t border-border bg-looking-glass/25 xl:w-80 xl:shrink-0 xl:overflow-y-auto xl:border-t-0 xl:border-l">
           <DiscoveryPanel />
         </aside>
       ) : null}

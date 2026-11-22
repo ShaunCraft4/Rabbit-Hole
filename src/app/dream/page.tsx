@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
 
+import { DreamScene } from "@/components/DreamScene";
 import { UnlockKeyButton } from "@/components/report/UnlockKeyButton";
 
 import { DreamWorkspace, SelectNodeFromUrl } from "./dream-client";
@@ -15,7 +16,9 @@ export default function DreamPage() {
       <Suspense fallback={null}>
         <SelectNodeFromUrl />
       </Suspense>
-      <DreamWorkspace goldenKey={<UnlockKeyButton />} />
+      <DreamScene className="flex flex-1 flex-col">
+        <DreamWorkspace goldenKey={<UnlockKeyButton />} />
+      </DreamScene>
     </>
   );
 }

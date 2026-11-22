@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 
+import { DREAM } from "@/components/DreamScene";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
@@ -11,7 +12,7 @@ import { cn } from "@/lib/utils";
 export function AskAnotherQuestion({ className }: { className?: string }) {
   return (
     <Button asChild variant="outline" size="sm" className={cn("w-fit cursor-pointer gap-1.5", className)}>
-      <Link href="/">
+      <Link href="/" transitionTypes={[DREAM.surface]}>
         <ArrowLeft className="size-4" aria-hidden />
         Ask another question
       </Link>

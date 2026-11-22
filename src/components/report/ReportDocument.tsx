@@ -6,6 +6,7 @@ import Link from "next/link";
 import { BrowserReadBadge } from "@/components/BrowserReadBadge";
 import { GAP_KIND_LABEL, retrievalLabel } from "@/components/panels/copy";
 import { AskAnotherQuestion } from "@/components/AskAnotherQuestion";
+import { DREAM } from "@/components/DreamScene";
 import { Button } from "@/components/ui/button";
 import { claimNodeId, gapNodeId } from "@/lib/graph/build";
 import type { Investigation, Report } from "@/lib/types";
@@ -62,6 +63,7 @@ function DiscoveryItem({
       <p className="text-base leading-7 break-words text-paper">
         <Link
           href={nodeHref(claimNodeId(discovery.claimId))}
+          transitionTypes={[DREAM.sink]}
           className="underline decoration-golden/45 underline-offset-4 hover:decoration-golden focus-visible:ring-2 focus-visible:ring-golden focus-visible:outline-none"
         >
           {discovery.summary}
@@ -196,7 +198,9 @@ export function ReportDocument({ investigation, report }: { investigation: Inves
         <div className="flex flex-wrap gap-2">
           <AskAnotherQuestion />
           <Button asChild variant="outline" size="sm" className="cursor-pointer">
-            <Link href="/dream">Back to map</Link>
+            <Link href="/dream" transitionTypes={[DREAM.sink]}>
+              Back to map
+            </Link>
           </Button>
           <Button
             type="button"
@@ -302,6 +306,7 @@ export function ReportDocument({ investigation, report }: { investigation: Inves
                   {gap ? (
                     <Link
                       href={nodeHref(gapNodeId(gap.id))}
+                      transitionTypes={[DREAM.sink]}
                       className="leading-7 break-words text-paper underline decoration-golden/45 underline-offset-4 hover:decoration-golden focus-visible:ring-2 focus-visible:ring-golden focus-visible:outline-none"
                     >
                       {item.text}

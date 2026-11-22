@@ -3,6 +3,7 @@
 import { useEffect, useSyncExternalStore } from "react";
 import { useRouter } from "next/navigation";
 
+import { DreamScene } from "@/components/DreamScene";
 import { ReportDocument } from "@/components/report/ReportDocument";
 import { useInvestigationStore } from "@/stores/investigation";
 
@@ -55,6 +56,7 @@ export default function ReportPage() {
   }
 
   return (
+    <DreamScene className="flex flex-1 flex-col">
     <div className={styles.wake}>
       <div className={styles.key} aria-hidden>
         <svg width="54" height="54" viewBox="0 0 64 64" fill="none">
@@ -69,5 +71,6 @@ export default function ReportPage() {
       ) : null}
       <ReportDocument investigation={investigation} report={report} />
     </div>
+    </DreamScene>
   );
 }

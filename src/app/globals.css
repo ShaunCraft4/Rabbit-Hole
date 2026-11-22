@@ -383,6 +383,262 @@
   outline-offset: 2px;
 }
 
+/* ------------------------------------------------------------------------------------------
+   Dream transitions. Nothing changes on screen in a single cut: things blur into focus, drift,
+   and dissolve like a dream shifting. Entrances are CSS (they also replay when Next re-shows a
+   page it kept alive); exits between pages are view transitions typed by the navigation
+   (see src/components/DreamScene.tsx). Fill mode is `backwards`, so no filter or transform
+   lingers on a container after it settles (a lingering filter would trap fixed children).
+   ------------------------------------------------------------------------------------------ */
+
+:root {
+  --dream-ease: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/* A scene forming: blur and haze clear, the room settles. */
+@keyframes dream-settle {
+  from {
+    opacity: 0;
+    filter: blur(9px) saturate(1.35) brightness(1.15);
+    transform: scale(1.018);
+  }
+  55% {
+    opacity: 1;
+    filter: blur(2px) saturate(1.1) brightness(1.04);
+  }
+  to {
+    opacity: 1;
+    filter: blur(0) saturate(1) brightness(1);
+    transform: scale(1);
+  }
+}
+
+/* Floating back up to the surface. */
+@keyframes dream-rise {
+  from {
+    opacity: 0;
+    filter: blur(12px);
+    transform: translateY(32px) scale(0.985);
+  }
+  to {
+    opacity: 1;
+    filter: blur(0);
+    transform: none;
+  }
+}
+
+/* Content shimmering into place where it stands. */
+@keyframes dream-swap {
+  from {
+    opacity: 0;
+    filter: blur(6px);
+  }
+  to {
+    opacity: 1;
+    filter: blur(0);
+  }
+}
+
+/* Forms and panels unfolding. */
+@keyframes dream-reveal {
+  from {
+    opacity: 0;
+    filter: blur(4px);
+    transform: translateY(-6px);
+  }
+  to {
+    opacity: 1;
+    filter: blur(0);
+    transform: none;
+  }
+}
+
+/* A node's page drifting in like a card from the deck. */
+@keyframes dream-page-in {
+  from {
+    opacity: 0;
+    filter: blur(8px);
+    transform: translateX(28px) rotate(0.8deg) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    filter: blur(0);
+    transform: none;
+  }
+}
+
+@keyframes dream-sheet-in {
+  from {
+    opacity: 0;
+    filter: blur(8px);
+    transform: translateY(36px);
+  }
+  to {
+    opacity: 1;
+    filter: blur(0);
+    transform: none;
+  }
+}
+
+@keyframes dream-unfold {
+  from {
+    height: 0;
+    opacity: 0;
+    filter: blur(4px);
+  }
+  to {
+    height: var(--radix-collapsible-content-height);
+    opacity: 1;
+    filter: blur(0);
+  }
+}
+
+@keyframes dream-fold {
+  from {
+    height: var(--radix-collapsible-content-height);
+    opacity: 1;
+  }
+  to {
+    height: 0;
+    opacity: 0;
+    filter: blur(4px);
+  }
+}
+
+.dream-settle {
+  animation: dream-settle 900ms var(--dream-ease) backwards;
+}
+
+.dream-rise {
+  animation: dream-rise 820ms var(--dream-ease) backwards;
+}
+
+.dream-swap {
+  animation: dream-swap 420ms var(--dream-ease) backwards;
+}
+
+.dream-reveal {
+  animation: dream-reveal 360ms var(--dream-ease) backwards;
+}
+
+.dream-page-in {
+  animation: dream-page-in 520ms var(--dream-ease) backwards;
+}
+
+@media (max-width: 767px) {
+  .dream-page-in {
+    animation-name: dream-sheet-in;
+  }
+}
+
+[data-slot="collapsible-content"] {
+  overflow: clip;
+  overflow-clip-margin: 6px;
+}
+
+[data-slot="collapsible-content"][data-state="open"] {
+  animation: dream-unfold 380ms var(--dream-ease);
+}
+
+[data-slot="collapsible-content"][data-state="closed"] {
+  animation: dream-fold 260ms ease-in;
+}
+
+/* Gold buttons: a soft shimmer sweeps across on hover (behind the label). */
+[data-slot="button"][data-variant="default"] {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+}
+
+[data-slot="button"][data-variant="default"]::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background: linear-gradient(105deg, transparent 32%, rgb(255 250 235 / 0.5) 50%, transparent 68%);
+  transform: translateX(-130%);
+  transition: transform 750ms var(--dream-ease);
+}
+
+[data-slot="button"][data-variant="default"]:hover::after {
+  transform: translateX(130%);
+}
+
+/* Page exits (view transitions). Clicks pass through to the arriving page. */
+::view-transition {
+  pointer-events: none;
+}
+
+::view-transition-old(.dream-sink) {
+  animation: dream-vt-sink 560ms cubic-bezier(0.5, 0, 0.75, 0) both;
+}
+
+::view-transition-old(.dream-surface) {
+  animation: dream-vt-surface 620ms cubic-bezier(0.5, 0, 0.75, 0) both;
+}
+
+::view-transition-old(.dream-wake) {
+  animation: dream-vt-wake 700ms ease-in both;
+}
+
+/* Falling deeper: the old scene floats up past you and blurs away. */
+@keyframes dream-vt-sink {
+  to {
+    opacity: 0;
+    filter: blur(10px) saturate(1.4);
+    transform: translateY(-56px) scale(1.03);
+  }
+}
+
+/* Waking toward the surface: the dream sinks into violet mist. */
+@keyframes dream-vt-surface {
+  40% {
+    filter: blur(3px) hue-rotate(-12deg) saturate(1.3);
+  }
+  to {
+    opacity: 0;
+    filter: blur(14px) hue-rotate(-28deg) saturate(1.5);
+    transform: translateY(64px) scale(0.95);
+  }
+}
+
+/* The Golden Key turns: the map melts into golden light. */
+@keyframes dream-vt-wake {
+  45% {
+    opacity: 0.9;
+    filter: brightness(1.6) sepia(0.45) blur(2px);
+  }
+  to {
+    opacity: 0;
+    filter: brightness(2.2) sepia(0.7) blur(12px);
+    transform: scale(1.06);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-old(*),
+  ::view-transition-new(*),
+  ::view-transition-group(*) {
+    animation-duration: 0s !important;
+    animation-delay: 0s !important;
+  }
+
+  .dream-settle,
+  .dream-rise,
+  .dream-swap,
+  .dream-reveal,
+  .dream-page-in,
+  [data-slot="collapsible-content"][data-state] {
+    animation: none;
+  }
+
+  [data-slot="button"][data-variant="default"]::after {
+    display: none;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .fall-out,
   .fall-in,

@@ -74,6 +74,7 @@ function GraphView() {
   const seenLayout = useRef<string | null>(null);
   const ready = useRef(false);
   const canvasRef = useRef<HTMLDivElement>(null);
+  const savedViewport = useRef<Viewport | null>(null);
 
   const page = useMemo(() => {
     if (!investigation || !tree || !pageNodeId) return null;
@@ -163,6 +164,32 @@ function GraphView() {
       pageOpenRef.current = false;
       backRef.current = api.current.getViewport();
     });
+  }, []);
+
+  // Next hides this page (React Activity) when navigating away: effects clean up on hide and run
+  // again on show, and React Flow's camera comes back at the default view. Remember the camera on
+  // hide and put it back on show, once React Flow's pan-zoom is ready again. (Declared before the
+  // fit effect, so a layout that changed while hidden is still re-fitted afterwards.)
+  useEffect(() => {
+    const saved = savedViewport.current;
+    let cancel = false;
+    let frame = 0;
+    let tries = 0;
+    const restore = () => {
+      if (cancel || !saved) return;
+      void api.current
+        .setViewport(saved)
+        .catch(() => false)
+        .then((applied) => {
+          if (!cancel && !applied && tries++ < 60) frame = requestAnimationFrame(restore);
+        });
+    };
+    restore();
+    return () => {
+      cancel = true;
+      cancelAnimationFrame(frame);
+      if (ready.current) savedViewport.current = api.current.getViewport();
+    };
   }, []);
 
   useEffect(() => {
