@@ -269,7 +269,7 @@ export function EvidenceSection({
         >
           <TabsList
             aria-label="Evidence format"
-            className="h-auto w-full flex-wrap justify-start gap-1 rounded-xl border border-paper/12 bg-midnight/45 p-1 sm:w-fit"
+            className="h-auto w-full flex-wrap justify-start gap-1 rounded-xl border border-paper/12 bg-midnight/45 p-1 group-data-horizontal/tabs:h-auto sm:w-fit"
           >
             {VIEWS.map((option) => (
               <TabsTrigger
