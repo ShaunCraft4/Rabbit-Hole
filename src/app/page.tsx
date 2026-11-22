@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState, type FormEvent, type KeyboardEvent } from "react";
+import { useEffect, useLayoutEffect, useRef, useState, type FormEvent, type KeyboardEvent } from "react";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { toast } from "sonner";
@@ -43,6 +43,19 @@ export default function EntrancePage() {
 
   useEffect(() => {
     document.title = "The entrance · Rabbit Hole";
+  }, []);
+
+  // With Cache Components, Next keeps this page alive (hidden) after we fall to /dream, so its
+  // state survives. Reset the one-time fall when the page is hidden; otherwise "Ask another
+  // question" brings back an entrance that is still faded out, with its buttons disabled.
+  useLayoutEffect(() => {
+    return () => {
+      busy.current = false;
+      setFalling(false);
+      setWorking(null);
+      setError(null);
+      setQuestion("");
+    };
   }, []);
 
   async function fallToDream() {

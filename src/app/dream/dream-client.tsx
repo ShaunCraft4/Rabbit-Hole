@@ -93,37 +93,42 @@ export function DreamWorkspace({ goldenKey }: { goldenKey: ReactNode }) {
   const hydrated = useInvestigationHydrated();
   const investigation = useInvestigationStore((state) => state.investigation);
   const phase = useInvestigationStore((state) => state.phase);
-  const [flowError, setFlowError] = useState<string | null>(null);
-  const [opening, setOpening] = useState(false);
+  // Next keeps this page alive (hidden) across "Ask another question", so this state is scoped to
+  // the investigation it belongs to: a run or error from the previous dream never shows on the next.
+  const [flowErrorFor, setFlowErrorFor] = useState<{ id: string; message: string } | null>(null);
+  const [openingFor, setOpeningFor] = useState<string | null>(null);
 
   useEffect(() => {
     if (!hydrated) return;
     if (!investigation || phase === "entrance") router.replace("/");
   }, [hydrated, investigation, phase, router]);
 
-  async function openDoors() {
-    setFlowError(null);
-    setOpening(true);
+  async function openDoors(id: string) {
+    setFlowErrorFor(null);
+    setOpeningFor(id);
     try {
       await runResearchAll();
     } catch (error) {
       const message = errorMessage(error);
-      setFlowError(message);
+      setFlowErrorFor({ id, message });
       toast.error(message);
     } finally {
-      setOpening(false);
+      setOpeningFor((current) => (current === id ? null : current));
     }
   }
 
   if (!hydrated || !investigation || phase === "entrance") return <DreamPending />;
+  const id = investigation.id;
+  const flowError = flowErrorFor?.id === id ? flowErrorFor.message : null;
 
+  // Keyed by investigation, so a new dream starts with fresh views (graph camera, open forms).
   return (
     <>
       <ArrivalVeil />
       {phase === "planning" ? (
-        <PlanningView opening={opening} flowError={flowError} onOpen={() => void openDoors()} />
+        <PlanningView key={id} opening={openingFor === id} flowError={flowError} onOpen={() => void openDoors(id)} />
       ) : (
-        <WorkspaceView flowError={flowError} goldenKey={goldenKey} />
+        <WorkspaceView key={id} flowError={flowError} goldenKey={goldenKey} />
       )}
     </>
   );
