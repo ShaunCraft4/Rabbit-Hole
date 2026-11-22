@@ -2,19 +2,21 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
-import { ExternalLink, Lock } from "lucide-react";
+import { Lock } from "lucide-react";
 
-import { BrowserReadBadge } from "@/components/BrowserReadBadge";
-import { GAP_KIND_LABEL, retrievalLabel } from "@/components/panels/copy";
+import { GAP_KIND_LABEL } from "@/components/panels/copy";
 import { AskAnotherQuestion } from "@/components/AskAnotherQuestion";
 import { DREAM } from "@/components/DreamScene";
 import { Button } from "@/components/ui/button";
 import { gapNodeId } from "@/lib/graph/build";
 import { REGION_COLORS } from "@/lib/skilltree";
 import type { Investigation, Report } from "@/lib/types";
+import { useHistoryStore } from "@/stores/history";
 
 import { DiscoveryCard } from "./DiscoveryCard";
-import { buildReportView, findingToMarkdown, reportToMarkdown, type EvidenceItem } from "./markdown";
+import { EvidenceSection } from "./EvidenceSection";
+import { buildReportView, findingToMarkdown, reportToMarkdown } from "./markdown";
+import { SectionHeading, stagger } from "./SectionHeading";
 
 const DOWNLOAD_NAME = "golden-key.md";
 
@@ -23,53 +25,6 @@ type Notice = { tone: "ok" | "err"; text: string };
 function nodeHref(nodeId: string): string {
   return `/dream?node=${encodeURIComponent(nodeId)}`;
 }
-
-function EvidenceCite({ item }: { item: EvidenceItem }) {
-  if (item.discoveryIndexes.length === 0) {
-    return <p className="text-sm text-paper/70">No discovery cites this source.</p>;
-  }
-
-  return (
-    <p className="text-sm leading-6 text-paper/80">
-      Cited by{" "}
-      {item.discoveryIndexes.map((index, position) => {
-        const last = position === item.discoveryIndexes.length - 1;
-        const only = item.discoveryIndexes.length === 1;
-        let separator = "";
-        if (!only && position > 0) separator = last ? " and " : ", ";
-        return (
-          <span key={index}>
-            {separator}
-            <a
-              href={`#discovery-${index}`}
-              className="text-golden underline-offset-4 hover:underline focus-visible:ring-2 focus-visible:ring-golden focus-visible:outline-none"
-            >
-              discovery {index}
-            </a>
-            {last ? "." : null}
-          </span>
-        );
-      })}
-    </p>
-  );
-}
-
-/** A section heading with an optional count and a one-line explanation under it. */
-function SectionHeading({ id, title, count, note }: { id: string; title: string; count?: string; note?: string }) {
-  return (
-    <div className="flex flex-col gap-1.5">
-      <div className="flex flex-wrap items-baseline justify-between gap-3">
-        <h2 id={id} className="font-heading text-3xl text-paper">
-          {title}
-        </h2>
-        {count ? <span className="font-mono text-xs tracking-[0.16em] text-golden/80 uppercase">{count}</span> : null}
-      </div>
-      {note ? <p className="text-sm leading-6 text-paper/65">{note}</p> : null}
-    </div>
-  );
-}
-
-const stagger = (index: number) => ({ animationDelay: `${Math.min(index, 8) * 70}ms` });
 
 function NextSteps({ steps }: { steps: Report["nextSteps"] }) {
   const [done, setDone] = useState<Record<number, boolean>>({});
@@ -138,6 +93,11 @@ export function ReportDocument({ investigation, report }: { investigation: Inves
     [investigation.branches],
   );
   const [notice, setNotice] = useState<Notice | null>(null);
+  // Citations' access dates: the day this dream was researched (from the dream history), or
+  // today for a dream that is not in the history (the saved example).
+  const researchedAt = useHistoryStore((state) => state.entries.find((entry) => entry.id === investigation.id)?.createdAt);
+  const [openedAt] = useState(() => Date.now());
+  const accessedAt = researchedAt ?? openedAt;
   const timer = useRef<number | null>(null);
 
   useEffect(
@@ -162,6 +122,33 @@ export function ReportDocument({ investigation, report }: { investigation: Inves
   }
 
   const markdown = () => reportToMarkdown(investigation.question, report, view, uncertaintyPrefix);
+
+  /** Copies plain text plus an HTML twin, so a paste into Word or Docs keeps italics and indents. */
+  async function copyRich(text: string, html: string, success: string): Promise<boolean> {
+    try {
+      if (typeof ClipboardItem !== "undefined" && navigator.clipboard?.write) {
+        await navigator.clipboard.write([
+          new ClipboardItem({
+            "text/plain": new Blob([text], { type: "text/plain" }),
+            "text/html": new Blob([html], { type: "text/html" }),
+          }),
+        ]);
+      } else {
+        await navigator.clipboard.writeText(text);
+      }
+      showNotice({ tone: "ok", text: success });
+      return true;
+    } catch {
+      try {
+        await navigator.clipboard.writeText(text);
+        showNotice({ tone: "ok", text: success });
+        return true;
+      } catch {
+        showNotice({ tone: "err", text: "Copying failed. Select the text and copy it manually." });
+        return false;
+      }
+    }
+  }
 
   async function copyText(text: string, success: string) {
     try {
@@ -343,73 +330,7 @@ export function ReportDocument({ investigation, report }: { investigation: Inves
 
       <NextSteps key={report.nextSteps.map((step) => step.step).join("\n")} steps={report.nextSteps} />
 
-      <section className="flex flex-col gap-5" aria-labelledby="evidence-heading">
-        <SectionHeading
-          id="evidence-heading"
-          title="Evidence"
-          count={view.evidence.length ? `${view.evidence.length} ${view.evidence.length === 1 ? "source" : "sources"}` : undefined}
-          note="The pages the key discoveries were read from."
-        />
-        {view.evidence.length === 0 ? (
-          <p className="text-sm leading-6 text-paper/70">No source was cited by the key discoveries.</p>
-        ) : (
-          <ol className="flex flex-col gap-3">
-            {view.evidence.map((item, index) => {
-              const failed = item.source.retrievalStatus === "failed";
-              return (
-                <li id={`source-${item.number}`} key={item.source.id} className="scroll-mt-28">
-                  <article
-                    style={stagger(index)}
-                    className="dream-reveal flex items-start gap-4 rounded-2xl border border-paper/12 bg-midnight/35 px-4 py-4 transition-[border-color,background-color] duration-500 hover:border-golden/35 hover:bg-wonderland/30"
-                  >
-                    <span
-                      aria-hidden
-                      className="shrink-0 rounded-lg border border-golden/40 bg-midnight/60 px-2 py-1 font-mono text-sm text-golden"
-                    >
-                      {item.number}
-                    </span>
-                    <div className="flex min-w-0 flex-1 flex-col gap-2.5">
-                      <p className="leading-6 break-words text-paper">
-                        <span className="sr-only">Source {item.number}: </span>
-                        {item.source.title}
-                      </p>
-                      <div className="flex flex-wrap items-center gap-1.5 text-[11px]">
-                        <span className="rounded-full border border-paper/15 bg-midnight/40 px-2 py-0.5 font-mono break-all text-paper/75">
-                          {item.source.domain}
-                        </span>
-                        <span className="rounded-full border border-paper/15 px-2 py-0.5 text-paper/70">{item.dateLabel}</span>
-                        <span
-                          className={`rounded-full border px-2 py-0.5 ${failed ? "border-destructive/45 text-destructive" : "border-paper/15 text-paper/70"}`}
-                        >
-                          {retrievalLabel(item.source.retrievalStatus)}
-                        </span>
-                        {item.source.retrievedVia === "browser" ? <BrowserReadBadge /> : null}
-                      </div>
-                      <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1.5 border-t border-paper/10 pt-2.5">
-                        <EvidenceCite item={item} />
-                        {item.href ? (
-                          <a
-                            href={item.href}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="inline-flex shrink-0 items-center gap-1 rounded text-sm text-golden transition-colors duration-300 hover:text-paper focus-visible:ring-2 focus-visible:ring-golden focus-visible:outline-none"
-                          >
-                            Open source
-                            <ExternalLink className="size-3.5" aria-hidden />
-                            <span className="sr-only"> {item.source.title} (opens in a new tab)</span>
-                          </a>
-                        ) : (
-                          <p className="text-xs text-paper/70">No page link is available.</p>
-                        )}
-                      </div>
-                    </div>
-                  </article>
-                </li>
-              );
-            })}
-          </ol>
-        )}
-      </section>
+      <EvidenceSection evidence={view.evidence} accessedAt={accessedAt} onCopy={copyRich} />
     </main>
   );
 }
