@@ -89,10 +89,13 @@ export function relationshipLabel(relationship: string): string {
   return relationship.replaceAll("_", " ");
 }
 
-/** Date-only values stay on that calendar day. Anything else is shown as entered. */
+/**
+ * "2026-10-27" or a timestamp like "2026-10-27T18:43:30Z" -> "Oct 27, 2026" (the calendar day as
+ * written, ignoring the time). Anything else is shown as entered.
+ */
 export function formatPublished(value: string): string {
   const trimmed = value.trim();
-  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(trimmed);
+  const match = /^(\d{4})-(\d{2})-(\d{2})(?:[T ]\d{2}:\d{2}(?::\d{2}(?:\.\d+)?)?(?:Z|[+-]\d{2}:?\d{2})?)?$/.exec(trimmed);
   if (!match) return trimmed;
   const year = Number(match[1]);
   const month = Number(match[2]);

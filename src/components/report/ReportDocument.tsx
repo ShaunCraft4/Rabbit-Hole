@@ -2,16 +2,19 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
+import { ExternalLink, Lock } from "lucide-react";
 
 import { BrowserReadBadge } from "@/components/BrowserReadBadge";
 import { GAP_KIND_LABEL, retrievalLabel } from "@/components/panels/copy";
 import { AskAnotherQuestion } from "@/components/AskAnotherQuestion";
 import { DREAM } from "@/components/DreamScene";
 import { Button } from "@/components/ui/button";
-import { claimNodeId, gapNodeId } from "@/lib/graph/build";
+import { gapNodeId } from "@/lib/graph/build";
+import { REGION_COLORS } from "@/lib/skilltree";
 import type { Investigation, Report } from "@/lib/types";
 
-import { buildReportView, findingToMarkdown, reportToMarkdown, type CitedDiscovery, type EvidenceItem } from "./markdown";
+import { DiscoveryCard } from "./DiscoveryCard";
+import { buildReportView, findingToMarkdown, reportToMarkdown, type EvidenceItem } from "./markdown";
 
 const DOWNLOAD_NAME = "golden-key.md";
 
@@ -51,42 +54,22 @@ function EvidenceCite({ item }: { item: EvidenceItem }) {
   );
 }
 
-function DiscoveryItem({
-  discovery,
-  onCopy,
-}: {
-  discovery: CitedDiscovery;
-  onCopy: (discovery: CitedDiscovery) => void;
-}) {
+/** A section heading with an optional count and a one-line explanation under it. */
+function SectionHeading({ id, title, count, note }: { id: string; title: string; count?: string; note?: string }) {
   return (
-    <li id={`discovery-${discovery.index}`} className="scroll-mt-28 flex flex-col gap-2">
-      <p className="text-base leading-7 break-words text-paper">
-        <Link
-          href={nodeHref(claimNodeId(discovery.claimId))}
-          transitionTypes={[DREAM.sink]}
-          className="underline decoration-golden/45 underline-offset-4 hover:decoration-golden focus-visible:ring-2 focus-visible:ring-golden focus-visible:outline-none"
-        >
-          {discovery.summary}
-        </Link>
-        {discovery.sourceNumber != null ? (
-          <>
-            {" "}
-            <a
-              href={`#source-${discovery.sourceNumber}`}
-              aria-label={`Source ${discovery.sourceNumber}`}
-              className="font-mono text-sm text-golden underline-offset-4 hover:underline focus-visible:ring-2 focus-visible:ring-golden focus-visible:outline-none"
-            >
-              [{discovery.sourceNumber}]
-            </a>
-          </>
-        ) : null}
-      </p>
-      <Button type="button" size="sm" variant="outline" className="w-fit cursor-pointer" onClick={() => onCopy(discovery)}>
-        Copy finding
-      </Button>
-    </li>
+    <div className="flex flex-col gap-1.5">
+      <div className="flex flex-wrap items-baseline justify-between gap-3">
+        <h2 id={id} className="font-heading text-3xl text-paper">
+          {title}
+        </h2>
+        {count ? <span className="font-mono text-xs tracking-[0.16em] text-golden/80 uppercase">{count}</span> : null}
+      </div>
+      {note ? <p className="text-sm leading-6 text-paper/65">{note}</p> : null}
+    </div>
   );
 }
+
+const stagger = (index: number) => ({ animationDelay: `${Math.min(index, 8) * 70}ms` });
 
 function NextSteps({ steps }: { steps: Report["nextSteps"] }) {
   const [done, setDone] = useState<Record<number, boolean>>({});
@@ -142,6 +125,18 @@ function NextSteps({ steps }: { steps: Report["nextSteps"] }) {
 export function ReportDocument({ investigation, report }: { investigation: Investigation; report: Report }) {
   const view = useMemo(() => buildReportView(investigation, report), [investigation, report]);
   const gaps = useMemo(() => new Map(investigation.gaps.map((gap) => [gap.id, gap])), [investigation.gaps]);
+  const claims = useMemo(() => new Map(investigation.claims.map((claim) => [claim.id, claim])), [investigation.claims]);
+  // Each door keeps the color its region has on the map (same order as the skill tree).
+  const doors = useMemo(
+    () =>
+      new Map(
+        investigation.branches.map((branch, index) => [
+          branch.id,
+          { title: branch.title, color: REGION_COLORS[index % REGION_COLORS.length] },
+        ]),
+      ),
+    [investigation.branches],
+  );
   const [notice, setNotice] = useState<Notice | null>(null);
   const timer = useRef<number | null>(null);
 
@@ -245,21 +240,32 @@ export function ReportDocument({ investigation, report }: { investigation: Inves
         <p className="font-heading text-xl leading-snug break-words text-paper sm:text-2xl">{report.directAnswer}</p>
       </section>
 
-      <section className="flex flex-col gap-4" aria-labelledby="discoveries-heading">
-        <h2 id="discoveries-heading" className="font-heading text-3xl text-paper">
-          Key discoveries
-        </h2>
+      <section className="flex flex-col gap-5" aria-labelledby="discoveries-heading">
+        <SectionHeading
+          id="discoveries-heading"
+          title="Key discoveries"
+          count={view.discoveries.length ? `${view.discoveries.length} ${view.discoveries.length === 1 ? "finding" : "findings"}` : undefined}
+          note="Each one rests on a quote found word for word on its source page."
+        />
         {view.discoveries.length === 0 ? (
           <p className="text-sm leading-6 text-paper/70">The report has no key discoveries.</p>
         ) : (
-          <ol className="flex list-decimal flex-col gap-5 pl-5 marker:font-mono marker:text-golden">
-            {view.discoveries.map((discovery) => (
-              <DiscoveryItem
-                key={`${discovery.index}-${discovery.claimId}`}
-                discovery={discovery}
-                onCopy={(item) => void copyText(findingToMarkdown(item), "Copied this finding.")}
-              />
-            ))}
+          <ol className="flex flex-col gap-4">
+            {view.discoveries.map((discovery, order) => {
+              const claim = claims.get(discovery.claimId);
+              const door = claim ? doors.get(claim.branchId) : undefined;
+              return (
+                <DiscoveryCard
+                  key={`${discovery.index}-${discovery.claimId}`}
+                  discovery={discovery}
+                  claim={claim}
+                  doorTitle={door?.title ?? null}
+                  color={door?.color ?? null}
+                  order={order}
+                  onCopy={() => void copyText(findingToMarkdown(discovery), "Copied this finding.")}
+                />
+              );
+            })}
           </ol>
         )}
       </section>
@@ -286,34 +292,48 @@ export function ReportDocument({ investigation, report }: { investigation: Inves
         )}
       </section>
 
-      <section className="flex flex-col gap-4" aria-labelledby="uncertain-heading">
-        <h2 id="uncertain-heading" className="font-heading text-3xl text-paper">
-          What remains uncertain
-        </h2>
+      <section className="flex flex-col gap-5" aria-labelledby="uncertain-heading">
+        <SectionHeading
+          id="uncertain-heading"
+          title="What remains uncertain"
+          note="Locked doors: what the evidence does not settle yet."
+        />
         {report.uncertainties.length === 0 ? (
           <p className="text-sm leading-6 text-paper/70">Nothing in this report is still marked uncertain.</p>
         ) : (
-          <ul className="flex flex-col gap-4">
+          <ul className="flex flex-col gap-3">
             {report.uncertainties.map((item, index) => {
               const gap = item.gapId ? gaps.get(item.gapId) : undefined;
               return (
-                <li key={`uncertainty-${index}`} className="flex flex-col gap-1.5">
-                  {gap ? (
-                    <span className="font-mono text-xs tracking-[0.14em] text-golden uppercase">
-                      {GAP_KIND_LABEL[gap.kind]}
-                    </span>
-                  ) : null}
-                  {gap ? (
-                    <Link
-                      href={nodeHref(gapNodeId(gap.id))}
-                      transitionTypes={[DREAM.sink]}
-                      className="leading-7 break-words text-paper underline decoration-golden/45 underline-offset-4 hover:decoration-golden focus-visible:ring-2 focus-visible:ring-golden focus-visible:outline-none"
-                    >
-                      {item.text}
-                    </Link>
-                  ) : (
-                    <p className="leading-7 break-words text-paper">{item.text}</p>
-                  )}
+                <li
+                  key={`uncertainty-${index}`}
+                  style={stagger(index)}
+                  className="dream-reveal flex items-start gap-3.5 rounded-2xl border border-dashed border-paper/22 bg-midnight/35 px-4 py-3.5 transition-[border-color,background-color] duration-500 hover:border-golden/40 hover:bg-wonderland/35"
+                >
+                  <span
+                    aria-hidden
+                    className="mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-full border border-dashed border-mystic-ink/45 bg-wonderland/60 text-mystic-ink"
+                  >
+                    <Lock className="size-3.5" />
+                  </span>
+                  <div className="flex min-w-0 flex-1 flex-col gap-1">
+                    {gap ? (
+                      <span className="font-mono text-[10px] tracking-[0.16em] text-golden uppercase">
+                        {GAP_KIND_LABEL[gap.kind]}
+                      </span>
+                    ) : null}
+                    {gap ? (
+                      <Link
+                        href={nodeHref(gapNodeId(gap.id))}
+                        transitionTypes={[DREAM.sink]}
+                        className="rounded leading-7 break-words text-paper transition-colors duration-300 hover:text-golden focus-visible:ring-2 focus-visible:ring-golden focus-visible:outline-none"
+                      >
+                        {item.text}
+                      </Link>
+                    ) : (
+                      <p className="leading-7 break-words text-paper">{item.text}</p>
+                    )}
+                  </div>
                 </li>
               );
             })}
@@ -323,39 +343,67 @@ export function ReportDocument({ investigation, report }: { investigation: Inves
 
       <NextSteps key={report.nextSteps.map((step) => step.step).join("\n")} steps={report.nextSteps} />
 
-      <section className="flex flex-col gap-4" aria-labelledby="evidence-heading">
-        <h2 id="evidence-heading" className="font-heading text-3xl text-paper">
-          Evidence
-        </h2>
+      <section className="flex flex-col gap-5" aria-labelledby="evidence-heading">
+        <SectionHeading
+          id="evidence-heading"
+          title="Evidence"
+          count={view.evidence.length ? `${view.evidence.length} ${view.evidence.length === 1 ? "source" : "sources"}` : undefined}
+          note="The pages the key discoveries were read from."
+        />
         {view.evidence.length === 0 ? (
           <p className="text-sm leading-6 text-paper/70">No source was cited by the key discoveries.</p>
         ) : (
-          <ol className="flex list-decimal flex-col gap-4 pl-5 marker:font-mono marker:text-golden">
-            {view.evidence.map((item) => {
+          <ol className="flex flex-col gap-3">
+            {view.evidence.map((item, index) => {
               const failed = item.source.retrievalStatus === "failed";
               return (
-                <li id={`source-${item.number}`} key={item.source.id} className="scroll-mt-28 flex flex-col gap-1.5">
-                  <p className="leading-6 break-words text-paper">{item.source.title}</p>
-                  <p className="font-mono text-xs break-all text-paper/75">{item.source.domain}</p>
-                  <p className="text-sm text-paper/70">Date: {item.dateLabel}</p>
-                  <p className={`text-sm ${failed ? "text-destructive" : "text-paper/80"}`}>
-                    Retrieval: {retrievalLabel(item.source.retrievalStatus)}
-                  </p>
-                  {item.source.retrievedVia === "browser" ? <BrowserReadBadge /> : null}
-                  {item.href ? (
-                    <a
-                      href={item.href}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="w-fit text-sm text-golden underline-offset-4 hover:underline focus-visible:ring-2 focus-visible:ring-golden focus-visible:outline-none"
+                <li id={`source-${item.number}`} key={item.source.id} className="scroll-mt-28">
+                  <article
+                    style={stagger(index)}
+                    className="dream-reveal flex items-start gap-4 rounded-2xl border border-paper/12 bg-midnight/35 px-4 py-4 transition-[border-color,background-color] duration-500 hover:border-golden/35 hover:bg-wonderland/30"
+                  >
+                    <span
+                      aria-hidden
+                      className="shrink-0 rounded-lg border border-golden/40 bg-midnight/60 px-2 py-1 font-mono text-sm text-golden"
                     >
-                      Open source
-                      <span className="sr-only"> {item.source.title}</span>
-                    </a>
-                  ) : (
-                    <p className="text-xs text-paper/75">No page link is available.</p>
-                  )}
-                  <EvidenceCite item={item} />
+                      {item.number}
+                    </span>
+                    <div className="flex min-w-0 flex-1 flex-col gap-2.5">
+                      <p className="leading-6 break-words text-paper">
+                        <span className="sr-only">Source {item.number}: </span>
+                        {item.source.title}
+                      </p>
+                      <div className="flex flex-wrap items-center gap-1.5 text-[11px]">
+                        <span className="rounded-full border border-paper/15 bg-midnight/40 px-2 py-0.5 font-mono break-all text-paper/75">
+                          {item.source.domain}
+                        </span>
+                        <span className="rounded-full border border-paper/15 px-2 py-0.5 text-paper/70">{item.dateLabel}</span>
+                        <span
+                          className={`rounded-full border px-2 py-0.5 ${failed ? "border-destructive/45 text-destructive" : "border-paper/15 text-paper/70"}`}
+                        >
+                          {retrievalLabel(item.source.retrievalStatus)}
+                        </span>
+                        {item.source.retrievedVia === "browser" ? <BrowserReadBadge /> : null}
+                      </div>
+                      <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1.5 border-t border-paper/10 pt-2.5">
+                        <EvidenceCite item={item} />
+                        {item.href ? (
+                          <a
+                            href={item.href}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex shrink-0 items-center gap-1 rounded text-sm text-golden transition-colors duration-300 hover:text-paper focus-visible:ring-2 focus-visible:ring-golden focus-visible:outline-none"
+                          >
+                            Open source
+                            <ExternalLink className="size-3.5" aria-hidden />
+                            <span className="sr-only"> {item.source.title} (opens in a new tab)</span>
+                          </a>
+                        ) : (
+                          <p className="text-xs text-paper/70">No page link is available.</p>
+                        )}
+                      </div>
+                    </div>
+                  </article>
                 </li>
               );
             })}
