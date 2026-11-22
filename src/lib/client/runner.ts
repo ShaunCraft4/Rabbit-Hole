@@ -13,21 +13,39 @@ import type { AnalyzeResponse, PlanResponse, ReportResponse, ResearchResponse } 
 import type { Branch, Source } from "@/lib/types";
 import { useInvestigationStore } from "@/stores/investigation";
 
-function dedupe<T>(slot: { current: Promise<T> | null }, task: () => Promise<T>): Promise<T> {
-  if (slot.current) return slot.current;
-  const run = task().finally(() => {
-    slot.current = null;
-  });
-  slot.current = run;
-  return run;
+type Slot<T> = { current: { key: string; run: Promise<T> } | null };
+
+/**
+ * One run at a time per slot and key. Keys are investigation ids, so a run still in flight for an
+ * earlier dream (after "Ask another question") never blocks or stands in for the new one.
+ */
+function dedupe<T>(slot: Slot<T>, key: string, task: () => Promise<T>): Promise<T> {
+  if (slot.current?.key === key) return slot.current.run;
+  const entry: { key: string; run: Promise<T> } = {
+    key,
+    run: task().finally(() => {
+      if (slot.current === entry) slot.current = null;
+    }),
+  };
+  slot.current = entry;
+  return entry.run;
 }
 
-const planSlot: { current: Promise<PlanResponse> | null } = { current: null };
-const researchSlot: { current: Promise<void> | null } = { current: null };
-const analyzeSlot: { current: Promise<AnalyzeResponse> | null } = { current: null };
-const gapSlot: { current: Promise<ResearchResponse> | null } = { current: null };
-const reportSlot: { current: Promise<ReportResponse> | null } = { current: null };
+const planSlot: Slot<PlanResponse> = { current: null };
+const researchSlot: Slot<void> = { current: null };
+const analyzeSlot: Slot<AnalyzeResponse> = { current: null };
+const gapSlot: Slot<ResearchResponse> = { current: null };
+const reportSlot: Slot<ReportResponse> = { current: null };
 const branchSlots = new Map<string, Promise<void>>();
+
+function currentId(): string {
+  return useInvestigationStore.getState().investigation?.id ?? "";
+}
+
+/** False once the user has started a different dream: late results from the old one are dropped. */
+function isCurrent(investigationId: string): boolean {
+  return investigationId !== "" && currentId() === investigationId;
+}
 
 /** Page text never travels back to the server. */
 function withoutText(source: Source): Omit<Source, "text"> {
@@ -47,7 +65,7 @@ function requestError(error: { issues: { message: string }[] }): ApiClientError 
 }
 
 export function runPlan(question: string): Promise<PlanResponse> {
-  return dedupe(planSlot, async () => {
+  return dedupe(planSlot, "plan", async () => {
     const parsed = PlanRequestSchema.safeParse({ question });
     if (!parsed.success) throw requestError(parsed.error);
     const plan = await postPlan(parsed.data);
@@ -59,6 +77,7 @@ export function runPlan(question: string): Promise<PlanResponse> {
 }
 
 async function researchOne(branch: Branch): Promise<void> {
+  const investigationId = currentId();
   try {
     const parsed = ResearchRequestSchema.safeParse({
       branch: {
@@ -70,6 +89,7 @@ async function researchOne(branch: Branch): Promise<void> {
     });
     if (!parsed.success) throw requestError(parsed.error);
     const response = await postResearch(parsed.data);
+    if (!isCurrent(investigationId)) return;
     const store = useInvestigationStore.getState();
     store.mergeResearch(response);
     if (response.status === "failed") {
@@ -83,6 +103,7 @@ async function researchOne(branch: Branch): Promise<void> {
       toast.message(response.note, { id: `branch-${branch.id}` });
     }
   } catch (error) {
+    if (!isCurrent(investigationId)) return;
     const message = error instanceof ApiClientError ? error.message : "This door did not open.";
     useInvestigationStore.getState().setBranchStatus(branch.id, "failed", message);
     toast.error(message, { id: `branch-${branch.id}` });
@@ -94,12 +115,13 @@ async function researchOne(branch: Branch): Promise<void> {
  * Analysis runs again only after this door returns something.
  */
 export function retryBranch(branchId: string): Promise<void> {
-  const existing = branchSlots.get(branchId);
+  const key = `${currentId()}:${branchId}`;
+  const existing = branchSlots.get(key);
   if (existing) return existing;
   const run = retryBranchNow(branchId).finally(() => {
-    branchSlots.delete(branchId);
+    branchSlots.delete(key);
   });
-  branchSlots.set(branchId, run);
+  branchSlots.set(key, run);
   return run;
 }
 
@@ -110,11 +132,13 @@ async function retryBranchNow(branchId: string): Promise<void> {
     toast.error(message, { id: `branch-${branchId}` });
     throw new ApiClientError(API_ERROR_CODES.INVALID_REQUEST, message, 400);
   }
+  const investigationId = currentId();
   useInvestigationStore.getState().setBranchStatus(branch.id, "running");
   await researchOne(branch);
+  if (!isCurrent(investigationId)) return;
   const status = useInvestigationStore.getState().investigation?.branches.find((item) => item.id === branchId)?.status;
   if (status === "failed") return;
-  if (analyzeSlot.current) await analyzeSlot.current.catch(() => undefined);
+  if (analyzeSlot.current?.key === investigationId) await analyzeSlot.current.run.catch(() => undefined);
   try {
     await runAnalyze();
   } catch (error) {
@@ -131,7 +155,8 @@ async function retryBranchNow(branchId: string): Promise<void> {
  * then analysis runs over whatever succeeded.
  */
 export function runResearchAll(): Promise<void> {
-  return dedupe(researchSlot, async () => {
+  const investigationId = currentId();
+  return dedupe(researchSlot, investigationId, async () => {
     const investigation = useInvestigationStore.getState().investigation;
     if (!investigation) {
       throw new ApiClientError(
@@ -150,12 +175,14 @@ export function runResearchAll(): Promise<void> {
     }
 
     await Promise.allSettled(branches.map((branch) => researchOne(branch)));
+    if (!isCurrent(investigationId)) return;
     await runAnalyze();
   });
 }
 
 export function runAnalyze(): Promise<AnalyzeResponse> {
-  return dedupe(analyzeSlot, async () => {
+  const investigationId = currentId();
+  return dedupe(analyzeSlot, investigationId, async () => {
     const investigation = useInvestigationStore.getState().investigation;
     if (!investigation || investigation.branches.length === 0) {
       throw new ApiClientError(API_ERROR_CODES.INVALID_REQUEST, "There is nothing to analyze yet.", 400);
@@ -168,7 +195,7 @@ export function runAnalyze(): Promise<AnalyzeResponse> {
     });
     if (!parsed.success) throw requestError(parsed.error);
     const response = await postAnalyze(parsed.data);
-    useInvestigationStore.getState().applyAnalysis(response);
+    if (isCurrent(investigationId)) useInvestigationStore.getState().applyAnalysis(response);
     return response;
   });
 }
@@ -177,7 +204,8 @@ export function runAnalyze(): Promise<AnalyzeResponse> {
  * Follows one gap without closing it. The user decides when a gap is resolved.
  */
 export function investigateGap(gapId: string): Promise<ResearchResponse> {
-  return dedupe(gapSlot, async () => {
+  const investigationId = currentId();
+  return dedupe(gapSlot, investigationId, async () => {
     const investigation = useInvestigationStore.getState().investigation;
     const gap = investigation?.gaps.find((item) => item.id === gapId);
     if (!investigation || !gap) {
@@ -216,13 +244,14 @@ export function investigateGap(gapId: string): Promise<ResearchResponse> {
     if (!parsed.success) throw requestError(parsed.error);
 
     const response = await postResearch(parsed.data);
-    useInvestigationStore.getState().mergeResearch(response);
+    if (isCurrent(investigationId)) useInvestigationStore.getState().mergeResearch(response);
     return response;
   });
 }
 
 export function runReport(): Promise<ReportResponse> {
-  return dedupe(reportSlot, async () => {
+  const investigationId = currentId();
+  return dedupe(reportSlot, investigationId, async () => {
     const investigation = useInvestigationStore.getState().investigation;
     if (!investigation) {
       throw new ApiClientError(API_ERROR_CODES.INVALID_REQUEST, "There is no dream to report.", 400);
@@ -237,7 +266,7 @@ export function runReport(): Promise<ReportResponse> {
     });
     if (!parsed.success) throw requestError(parsed.error);
     const report = await postReport(parsed.data);
-    useInvestigationStore.getState().setReport(report);
+    if (isCurrent(investigationId)) useInvestigationStore.getState().setReport(report);
     return report;
   });
 }

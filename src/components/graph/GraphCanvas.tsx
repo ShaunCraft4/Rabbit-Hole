@@ -73,6 +73,7 @@ function GraphView() {
   const fitGen = useRef(0);
   const seenLayout = useRef<string | null>(null);
   const ready = useRef(false);
+  const canvasRef = useRef<HTMLDivElement>(null);
 
   const page = useMemo(() => {
     if (!investigation || !tree || !pageNodeId) return null;
@@ -168,17 +169,42 @@ function GraphView() {
     const current = treeRef.current;
     if (!current) return;
     if (seenLayout.current === current.layoutKey) return;
-    seenLayout.current = current.layoutKey;
-    if (pageOpenRef.current) return;
+    if (pageOpenRef.current) {
+      seenLayout.current = current.layoutKey;
+      return;
+    }
     const gen = ++fitGen.current;
     let cancel = false;
-    void api.current.fitBounds(current.bounds, { padding: 0.08, duration: motionDuration(450) }).finally(() => {
+    let frame = 0;
+    let tries = 0;
+    // The layout counts as fitted only once a fit is applied. (React runs effects twice in
+    // development, and the first run's fit is cancelled by its cleanup.) On first mount React
+    // Flow's pan-zoom may not exist yet and fitBounds resolves false without moving the camera,
+    // so retry each frame (about a second at most) until the canvas has a size and the fit lands.
+    const attempt = () => {
       if (cancel || fitGen.current !== gen) return;
-      ready.current = true;
-      setFitTick((tick) => tick + 1);
-    });
+      const box = canvasRef.current;
+      const sized = box !== null && box.clientWidth > 0 && box.clientHeight > 0;
+      const run = sized
+        ? api.current.fitBounds(current.bounds, { padding: 0.08, duration: motionDuration(450) })
+        : Promise.resolve(false);
+      void run
+        .catch(() => false)
+        .then((applied) => {
+          if (cancel || fitGen.current !== gen) return;
+          if (!applied && tries++ < 60) {
+            frame = requestAnimationFrame(attempt);
+            return;
+          }
+          seenLayout.current = current.layoutKey;
+          ready.current = true;
+          setFitTick((tick) => tick + 1);
+        });
+    };
+    attempt();
     return () => {
       cancel = true;
+      cancelAnimationFrame(frame);
     };
   }, [tree?.layoutKey]);
 
@@ -260,7 +286,7 @@ function GraphView() {
 
       <div className="relative min-h-0 flex-1">
         <SkillTreeUiProvider value={ui}>
-          <div className="absolute inset-0">
+          <div ref={canvasRef} className="absolute inset-0">
             <ReactFlow
               className="skill-flow h-full w-full"
               nodes={flowNodes}

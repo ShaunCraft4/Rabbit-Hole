@@ -4,6 +4,7 @@ import { useEffect, useState, useSyncExternalStore, type FormEvent, type ReactNo
 import { useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 
+import { AskAnotherQuestion } from "@/components/AskAnotherQuestion";
 import { GraphCanvas } from "@/components/graph/GraphCanvas";
 import { ListView } from "@/components/list/ListView";
 import { BranchActivity } from "@/components/panels/BranchActivity";
@@ -221,6 +222,7 @@ function PlanningView({
         <p className="font-mono text-xs tracking-[0.18em] text-golden uppercase">The White Rabbit</p>
         <h1 className="font-heading text-4xl text-paper sm:text-5xl">The plan before the fall</h1>
         <p className="text-paper/80">{investigation.question}</p>
+        <AskAnotherQuestion />
         {investigation.assumptions.length > 0 ? (
           <p className="text-sm leading-6 text-paper/70">{investigation.assumptions.join(" ")}</p>
         ) : (
@@ -414,10 +416,11 @@ function WorkspaceView({ flowError, goldenKey }: { flowError: string | null; gol
       <SavedExampleNote />
       <WorkspaceHeader />
       <div className="flex flex-1 flex-col xl:min-h-0 xl:flex-row xl:overflow-hidden">
-      <aside className="flex flex-col gap-6 border-b border-border bg-wonderland/35 p-5 xl:w-72 xl:shrink-0 xl:overflow-y-auto xl:border-r xl:border-b-0">
+      <aside className="flex flex-col gap-6 border-b border-border bg-wonderland/35 p-5 xl:w-96 xl:shrink-0 xl:overflow-y-auto xl:border-r xl:border-b-0">
         <div className="flex flex-col gap-2">
           <p className="font-mono text-xs tracking-[0.18em] text-golden uppercase">The White Rabbit</p>
           <h1 className="font-heading text-3xl leading-snug break-words text-paper">{investigation.question}</h1>
+          <AskAnotherQuestion className="mt-1" />
         </div>
 
         <section className="flex flex-col gap-3" aria-labelledby="branch-list-heading">

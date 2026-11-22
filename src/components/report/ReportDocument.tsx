@@ -5,6 +5,7 @@ import Link from "next/link";
 
 import { BrowserReadBadge } from "@/components/BrowserReadBadge";
 import { GAP_KIND_LABEL, retrievalLabel } from "@/components/panels/copy";
+import { AskAnotherQuestion } from "@/components/AskAnotherQuestion";
 import { Button } from "@/components/ui/button";
 import { claimNodeId, gapNodeId } from "@/lib/graph/build";
 import type { Investigation, Report } from "@/lib/types";
@@ -193,6 +194,7 @@ export function ReportDocument({ investigation, report }: { investigation: Inves
     <main className="mx-auto flex w-full max-w-3xl flex-col gap-10 px-5 pt-4 pb-16">
       <div className="sticky top-0 z-20 -mx-5 flex flex-col gap-2 border-b border-border bg-midnight/92 px-5 py-3 backdrop-blur-md">
         <div className="flex flex-wrap gap-2">
+          <AskAnotherQuestion />
           <Button asChild variant="outline" size="sm" className="cursor-pointer">
             <Link href="/dream">Back to map</Link>
           </Button>
