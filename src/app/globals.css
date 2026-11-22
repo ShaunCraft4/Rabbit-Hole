@@ -617,6 +617,106 @@
   }
 }
 
+/* ------------------------------------------------------------------------------------------
+   Print / Save as PDF (the Golden Key). A clean light document: white paper, dark ink, gold
+   toned down to bronze, the doors' colors kept, nothing interactive, no page-splitting cards.
+   ------------------------------------------------------------------------------------------ */
+@media print {
+  @page {
+    size: letter;
+    margin: 0.6in 0.65in;
+  }
+
+  html,
+  body {
+    background: #fff !important;
+    background-image: none !important;
+    color: #1c1b22 !important;
+  }
+
+  nextjs-portal,
+  [data-sonner-toaster],
+  .arrival-veil {
+    display: none !important;
+  }
+
+  *,
+  *::before,
+  *::after {
+    animation: none !important;
+    transition: none !important;
+  }
+
+  .golden-key-doc,
+  .golden-key-doc * {
+    color: #1c1b22 !important;
+    background-color: transparent !important;
+    background-image: none !important;
+    box-shadow: none !important;
+    text-shadow: none !important;
+    backdrop-filter: none !important;
+    filter: none !important;
+    border-color: #ddd6c6 !important;
+    translate: none !important;
+  }
+
+  /* Muted text stays a step lighter, so the hierarchy survives on paper. */
+  .golden-key-doc [class*=" text-paper/"],
+  .golden-key-doc [class^="text-paper/"] {
+    color: #4d4a57 !important;
+  }
+
+  .golden-key-doc [class~="text-golden"],
+  .golden-key-doc [class~="text-golden/70"],
+  .golden-key-doc [class~="text-golden/80"],
+  .golden-key-doc [class~="text-golden/85"] {
+    color: #7a5c12 !important;
+  }
+
+  .golden-key-doc [class*=" border-golden"],
+  .golden-key-doc [class^="border-golden"] {
+    border-color: #b8962e !important;
+  }
+
+  /* The doors' colors (card edge, chip dot) print as they look on screen. */
+  .golden-key-doc [data-print-color] {
+    background-color: var(--card-accent) !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  .golden-key-doc a {
+    text-decoration: none !important;
+  }
+
+  /* Next steps print as an empty checklist to tick by hand (steps already done stay filled). */
+  .golden-key-doc input[type="checkbox"] {
+    appearance: none;
+    width: 12px;
+    height: 12px;
+    border: 1.5px solid #8a8577 !important;
+    border-radius: 3px;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  .golden-key-doc input[type="checkbox"]:checked {
+    background-color: #7a5c12 !important;
+    border-color: #7a5c12 !important;
+  }
+
+  .golden-key-doc li,
+  .golden-key-doc article,
+  .golden-key-doc blockquote {
+    break-inside: avoid;
+  }
+
+  .golden-key-doc h2,
+  .golden-key-doc h3 {
+    break-after: avoid;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   ::view-transition-old(*),
   ::view-transition-new(*),

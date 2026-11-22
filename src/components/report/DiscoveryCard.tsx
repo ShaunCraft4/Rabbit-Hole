@@ -38,7 +38,7 @@ export function EvidenceChip({ status }: { status: EvidenceStatus }) {
 export function DoorChip({ title, color }: { title: string; color: RegionColor | null }) {
   return (
     <span className="inline-flex max-w-full items-center gap-1.5 rounded-full border border-paper/15 bg-midnight/40 px-2 py-0.5 text-[11px] text-paper/80">
-      <span className="size-2 shrink-0 rounded-full" style={{ background: regionVar(color), boxShadow: `0 0 8px ${regionVar(color)}` }} aria-hidden />
+      <span data-print-color className="size-2 shrink-0 rounded-full" style={{ background: regionVar(color), boxShadow: `0 0 8px ${regionVar(color)}` }} aria-hidden />
       <span className="truncate">{title}</span>
     </span>
   );
@@ -74,10 +74,10 @@ export function DiscoveryCard({
         className="dream-reveal group/card relative overflow-hidden rounded-2xl border border-paper/12 bg-[linear-gradient(135deg,rgb(42_30_77/0.72),rgb(42_30_77/0.38)_55%,rgb(17_19_35/0.5))] py-4 pr-4 pl-5 shadow-[0_10px_30px_-20px_rgb(0_0_0/0.9)] transition-[border-color,box-shadow,translate] duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] hover:-translate-y-0.5 hover:border-golden/35 hover:shadow-[0_0_40px_-16px_rgb(214_183_107/0.55)] motion-reduce:hover:translate-y-0"
       >
         {/* The door's color runs down the edge, like the region on the map. */}
-        <span aria-hidden className="absolute inset-y-0 left-0 w-1 bg-(--card-accent) opacity-80" />
+        <span aria-hidden data-print-color className="absolute inset-y-0 left-0 w-1 bg-(--card-accent) opacity-80" />
         <span
           aria-hidden
-          className="pointer-events-none absolute -top-16 -right-16 size-40 rounded-full bg-(--card-accent) opacity-[0.07] blur-2xl transition-opacity duration-500 group-hover/card:opacity-[0.14]"
+          className="pointer-events-none absolute -top-16 -right-16 size-40 print:hidden rounded-full bg-(--card-accent) opacity-[0.07] blur-2xl transition-opacity duration-500 group-hover/card:opacity-[0.14]"
         />
 
         <div className="relative flex items-start gap-4">
@@ -125,7 +125,7 @@ export function DiscoveryCard({
               ) : (
                 <span className="text-xs text-paper/60">Source not recorded</span>
               )}
-              <div className="flex shrink-0 items-center gap-1">
+              <div className="flex shrink-0 items-center gap-1 print:hidden">
                 <Button asChild variant="ghost" size="xs" className="cursor-pointer text-paper/75">
                   <Link href={`/dream?node=${encodeURIComponent(claimNodeId(discovery.claimId))}`} transitionTypes={[DREAM.sink]}>
                     <MapPin aria-hidden />

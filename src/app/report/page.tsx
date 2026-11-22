@@ -58,14 +58,14 @@ export default function ReportPage() {
   return (
     <DreamScene className="flex flex-1 flex-col">
     <div className={styles.wake}>
-      <div className={styles.key} aria-hidden>
+      <div className={`${styles.key} print:hidden`} aria-hidden>
         <svg width="54" height="54" viewBox="0 0 64 64" fill="none">
           <circle cx="24" cy="26" r="12" stroke="currentColor" strokeWidth="3" />
           <path d="M34 26h20M44 26v10M50 26v6" stroke="currentColor" strokeWidth="3" strokeLinecap="round" />
         </svg>
       </div>
       {savedExample ? (
-        <p className="mx-auto w-full max-w-3xl px-5 pt-4 text-sm text-paper">
+        <p className="mx-auto w-full max-w-3xl px-5 pt-4 text-sm text-paper print:max-w-none print:px-0 print:pt-0 print:text-neutral-600">
           Saved example. This Golden Key was recorded earlier, not written just now.
         </p>
       ) : null}

@@ -109,12 +109,13 @@ function EvidenceCards({ evidence }: { evidence: EvidenceItem[] }) {
                 </div>
                 <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1.5 border-t border-paper/10 pt-2.5">
                   <EvidenceCite item={item} />
+                  {item.href ? <span className="hidden text-xs break-all print:inline">{item.href}</span> : null}
                   {item.href ? (
                     <a
                       href={item.href}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="inline-flex shrink-0 items-center gap-1 rounded text-sm text-golden transition-colors duration-300 hover:text-paper focus-visible:ring-2 focus-visible:ring-golden focus-visible:outline-none"
+                      className="inline-flex shrink-0 items-center gap-1 rounded text-sm text-golden print:hidden transition-colors duration-300 hover:text-paper focus-visible:ring-2 focus-visible:ring-golden focus-visible:outline-none"
                     >
                       Open source
                       <ExternalLink className="size-3.5" aria-hidden />
@@ -169,7 +170,7 @@ function CitationList({
           type="button"
           size="sm"
           variant="outline"
-          className="cursor-pointer gap-1.5"
+          className="cursor-pointer gap-1.5 print:hidden"
           onClick={() => void copy("all", allText, allHtml, `Copied the ${info.label} ${info.listTitle.toLowerCase()}.`)}
         >
           {copied === "all" ? <Check aria-hidden /> : <Copy aria-hidden />}
@@ -199,7 +200,7 @@ function CitationList({
                 type="button"
                 variant="ghost"
                 size="icon-xs"
-                className="mt-1 shrink-0 cursor-pointer text-paper/60 opacity-70 transition-opacity group-hover/cite:opacity-100"
+                className="mt-1 shrink-0 cursor-pointer text-paper/60 opacity-70 print:hidden transition-opacity group-hover/cite:opacity-100"
                 aria-label={`Copy the ${info.label} citation for source ${citation.number}`}
                 onClick={() => void copy(key, citation.text, hangingParagraph(citation.html), `Copied the ${info.label} citation.`)}
               >
@@ -210,7 +211,7 @@ function CitationList({
         })}
       </ol>
 
-      <p className="border-t border-paper/10 pt-3 text-xs leading-5 text-paper/60">
+      <p className="border-t border-paper/10 pt-3 text-xs leading-5 text-paper/60 print:hidden">
         {info.rules} Access dates are {accessedLabel}, when this dream was researched. Pages rarely name an author, so each entry
         follows its style&apos;s no-author rule; where a page names no website, its web address stands in.
       </p>
@@ -269,7 +270,7 @@ export function EvidenceSection({
         >
           <TabsList
             aria-label="Evidence format"
-            className="h-auto w-full flex-wrap justify-start gap-1 rounded-xl border border-paper/12 bg-midnight/45 p-1 group-data-horizontal/tabs:h-auto sm:w-fit"
+            className="h-auto w-full flex-wrap justify-start gap-1 rounded-xl border border-paper/12 bg-midnight/45 p-1 group-data-horizontal/tabs:h-auto sm:w-fit print:hidden"
           >
             {VIEWS.map((option) => (
               <TabsTrigger

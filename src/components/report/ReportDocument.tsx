@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
-import { Lock } from "lucide-react";
+import { FileDown, Lock } from "lucide-react";
 
 import { GAP_KIND_LABEL } from "@/components/panels/copy";
 import { AskAnotherQuestion } from "@/components/AskAnotherQuestion";
@@ -96,6 +96,7 @@ export function ReportDocument({ investigation, report }: { investigation: Inves
   // Citations' access dates: the day this dream was researched (from the dream history), or
   // today for a dream that is not in the history (the saved example).
   const researchedAt = useHistoryStore((state) => state.entries.find((entry) => entry.id === investigation.id)?.createdAt);
+  const dreamTitle = useHistoryStore((state) => state.entries.find((entry) => entry.id === investigation.id)?.title);
   const [openedAt] = useState(() => Date.now());
   const accessedAt = researchedAt ?? openedAt;
   const timer = useRef<number | null>(null);
@@ -150,6 +151,22 @@ export function ReportDocument({ investigation, report }: { investigation: Inves
     }
   }
 
+  /**
+   * Opens the print dialog ("Save as PDF" is a destination there). The print stylesheet turns the
+   * page into a clean, light document; the PDF's default file name comes from the page title.
+   */
+  function saveAsPdf() {
+    const previous = document.title;
+    const name = (dreamTitle ?? investigation.question).replace(/[\\/:*?"<>|]+/g, " ").replace(/\s+/g, " ").trim().slice(0, 80);
+    document.title = `Golden Key - ${name}`;
+    const restore = () => {
+      document.title = previous;
+      window.removeEventListener("afterprint", restore);
+    };
+    window.addEventListener("afterprint", restore);
+    window.print();
+  }
+
   async function copyText(text: string, success: string) {
     try {
       await navigator.clipboard.writeText(text);
@@ -175,8 +192,8 @@ export function ReportDocument({ investigation, report }: { investigation: Inves
   }
 
   return (
-    <main className="mx-auto flex w-full max-w-3xl flex-col gap-10 px-5 pt-4 pb-16">
-      <div className="sticky top-0 z-20 -mx-5 flex flex-col gap-2 border-b border-border bg-midnight/92 px-5 py-3 backdrop-blur-md">
+    <main className="golden-key-doc mx-auto flex w-full max-w-3xl flex-col gap-10 px-5 pt-4 pb-16 print:max-w-none print:gap-7 print:p-0">
+      <div className="sticky top-0 z-20 -mx-5 flex flex-col gap-2 border-b border-border bg-midnight/92 px-5 py-3 backdrop-blur-md print:hidden">
         <div className="flex flex-wrap gap-2">
           <AskAnotherQuestion />
           <Button asChild variant="outline" size="sm" className="cursor-pointer">
@@ -195,6 +212,10 @@ export function ReportDocument({ investigation, report }: { investigation: Inves
           <Button type="button" size="sm" variant="outline" className="cursor-pointer" onClick={download}>
             Download as .md
           </Button>
+          <Button type="button" size="sm" variant="outline" className="cursor-pointer gap-1.5" onClick={saveAsPdf}>
+            <FileDown aria-hidden />
+            Save as PDF
+          </Button>
         </div>
         <p
           role="status"
@@ -208,6 +229,10 @@ export function ReportDocument({ investigation, report }: { investigation: Inves
       <header className="flex flex-col gap-3">
         <p className="font-mono text-xs tracking-[0.18em] text-golden uppercase">Waking up</p>
         <h1 className="font-heading text-5xl text-paper">The Golden Key</h1>
+        <p className="hidden text-sm leading-6 print:block">
+          Research report from Rabbit Hole, {new Intl.DateTimeFormat("en", { dateStyle: "long" }).format(new Date(openedAt))}. Every
+          key discovery rests on a quote found word for word on its source page.
+        </p>
       </header>
 
       <section className="flex flex-col gap-3" aria-labelledby="original-question-heading">
