@@ -19,7 +19,8 @@ import {
 import type { EvidenceItem } from "./markdown";
 import { SectionHeading, stagger } from "./SectionHeading";
 
-type View = "cards" | CitationStyle;
+export type EvidenceView = "cards" | CitationStyle;
+type View = EvidenceView;
 
 const VIEW_KEY = "rabbit-hole.citation-style";
 const VIEWS: View[] = ["cards", ...CITATION_STYLE_ORDER];
@@ -27,7 +28,7 @@ const VIEWS: View[] = ["cards", ...CITATION_STYLE_ORDER];
 /** Copies text with an HTML twin (rich paste keeps italics and hanging indents). */
 export type RichCopy = (text: string, html: string, success: string) => Promise<boolean>;
 
-function readView(): View {
+export function readEvidenceView(): View {
   try {
     const stored = window.localStorage.getItem(VIEW_KEY);
     return VIEWS.includes(stored as View) ? (stored as View) : "cards";
@@ -36,7 +37,7 @@ function readView(): View {
   }
 }
 
-function saveView(view: View) {
+export function saveEvidenceView(view: View) {
   try {
     window.localStorage.setItem(VIEW_KEY, view);
   } catch {
@@ -227,14 +228,17 @@ export function EvidenceSection({
   evidence,
   accessedAt,
   onCopy,
+  view,
+  onViewChange,
 }: {
   evidence: EvidenceItem[];
   /** When the pages were read (ms); access/retrieval dates use this day. */
   accessedAt: number;
   onCopy: RichCopy;
+  /** The chosen format (kept by ReportDocument, which also prints the references in it). */
+  view: EvidenceView;
+  onViewChange: (view: EvidenceView) => void;
 }) {
-  // ReportDocument only renders in the browser (after the stores load), so reading storage here is safe.
-  const [view, setView] = useState<View>(readView);
   const accessed = useMemo(() => new Date(accessedAt), [accessedAt]);
   const sources = useMemo<CitationSource[]>(
     () =>
@@ -263,8 +267,7 @@ export function EvidenceSection({
         <Tabs
           value={view}
           onValueChange={(next) => {
-            setView(next as View);
-            saveView(next as View);
+            onViewChange(next as View);
           }}
           className="gap-4"
         >

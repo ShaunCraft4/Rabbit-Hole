@@ -12,9 +12,11 @@ import { gapNodeId } from "@/lib/graph/build";
 import { REGION_COLORS } from "@/lib/skilltree";
 import type { Investigation, Report } from "@/lib/types";
 import { useHistoryStore } from "@/stores/history";
+import { useInvestigationStore } from "@/stores/investigation";
 
 import { DiscoveryCard } from "./DiscoveryCard";
-import { EvidenceSection } from "./EvidenceSection";
+import { EvidenceSection, readEvidenceView, saveEvidenceView, type EvidenceView } from "./EvidenceSection";
+import { PrintReport } from "./PrintReport";
 import { buildReportView, findingToMarkdown, reportToMarkdown } from "./markdown";
 import { SectionHeading, stagger } from "./SectionHeading";
 
@@ -98,6 +100,9 @@ export function ReportDocument({ investigation, report }: { investigation: Inves
   const researchedAt = useHistoryStore((state) => state.entries.find((entry) => entry.id === investigation.id)?.createdAt);
   const dreamTitle = useHistoryStore((state) => state.entries.find((entry) => entry.id === investigation.id)?.title);
   const [openedAt] = useState(() => Date.now());
+  // The evidence format shown on screen is also the reference style of the printed document.
+  const [evidenceView, setEvidenceView] = useState<EvidenceView>(readEvidenceView);
+  const savedExample = useInvestigationStore((state) => state.savedExample);
   const accessedAt = researchedAt ?? openedAt;
   const timer = useRef<number | null>(null);
 
@@ -192,7 +197,8 @@ export function ReportDocument({ investigation, report }: { investigation: Inves
   }
 
   return (
-    <main className="golden-key-doc mx-auto flex w-full max-w-3xl flex-col gap-10 px-5 pt-4 pb-16 print:max-w-none print:gap-7 print:p-0">
+    <>
+    <main className="golden-key-doc mx-auto flex w-full max-w-3xl flex-col gap-10 px-5 pt-4 pb-16 print:hidden">
       <div className="sticky top-0 z-20 -mx-5 flex flex-col gap-2 border-b border-border bg-midnight/92 px-5 py-3 backdrop-blur-md print:hidden">
         <div className="flex flex-wrap gap-2">
           <AskAnotherQuestion />
@@ -229,10 +235,6 @@ export function ReportDocument({ investigation, report }: { investigation: Inves
       <header className="flex flex-col gap-3">
         <p className="font-mono text-xs tracking-[0.18em] text-golden uppercase">Waking up</p>
         <h1 className="font-heading text-5xl text-paper">The Golden Key</h1>
-        <p className="hidden text-sm leading-6 print:block">
-          Research report from Rabbit Hole, {new Intl.DateTimeFormat("en", { dateStyle: "long" }).format(new Date(openedAt))}. Every
-          key discovery rests on a quote found word for word on its source page.
-        </p>
       </header>
 
       <section className="flex flex-col gap-3" aria-labelledby="original-question-heading">
@@ -355,7 +357,30 @@ export function ReportDocument({ investigation, report }: { investigation: Inves
 
       <NextSteps key={report.nextSteps.map((step) => step.step).join("\n")} steps={report.nextSteps} />
 
-      <EvidenceSection evidence={view.evidence} accessedAt={accessedAt} onCopy={copyRich} />
+      <EvidenceSection
+        evidence={view.evidence}
+        accessedAt={accessedAt}
+        onCopy={copyRich}
+        view={evidenceView}
+        onViewChange={(next) => {
+          setEvidenceView(next);
+          saveEvidenceView(next);
+        }}
+      />
     </main>
+    <PrintReport
+      investigation={investigation}
+      report={report}
+      view={view}
+      claims={claims}
+      doors={doors}
+      gaps={gaps}
+      citationView={evidenceView}
+      accessedAt={accessedAt}
+      generatedAt={openedAt}
+      title={dreamTitle}
+      savedExample={savedExample}
+    />
+    </>
   );
 }

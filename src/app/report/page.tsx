@@ -65,7 +65,7 @@ export default function ReportPage() {
         </svg>
       </div>
       {savedExample ? (
-        <p className="mx-auto w-full max-w-3xl px-5 pt-4 text-sm text-paper print:max-w-none print:px-0 print:pt-0 print:text-neutral-600">
+        <p className="mx-auto w-full max-w-3xl px-5 pt-4 text-sm text-paper print:hidden">
           Saved example. This Golden Key was recorded earlier, not written just now.
         </p>
       ) : null}
