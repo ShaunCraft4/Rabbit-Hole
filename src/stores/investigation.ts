@@ -51,6 +51,11 @@ interface InvestigationActions {
   toggleCollapsed: (branchId: string) => void;
   setView: (view: InvestigationView) => void;
   loadInvestigation: (investigation: Investigation) => void;
+  /**
+   * Reopens a dream saved in the history (a historySnapshot). Validated like a page reload:
+   * searches that were still running are marked as stopped. False when the snapshot is unusable.
+   */
+  restore: (snapshot: unknown) => boolean;
   reset: () => void;
 }
 
@@ -151,7 +156,7 @@ function settleInterrupted(investigation: Investigation): {
   const errors: Record<string, string> = {};
   const branches = investigation.branches.map((branch) => {
     if (branch.status !== "running") return branch;
-    errors[branch.id] = "This search stopped when the page refreshed.";
+    errors[branch.id] = "This search stopped before it finished. Retry this door.";
     return { ...branch, status: "failed" as const };
   });
   return { investigation: { ...investigation, branches }, errors };
@@ -484,6 +489,13 @@ export const useInvestigationStore = create<InvestigationState>()(
         });
       },
 
+      restore: (snapshot) => {
+        const revived = revive(snapshot);
+        if (!revived?.investigation) return false;
+        set({ ...revived, selectedNodeId: null, savedExample: false });
+        return true;
+      },
+
       reset: () => set({ ...initialSlice }),
     }),
     {
@@ -507,3 +519,20 @@ export const useInvestigationStore = create<InvestigationState>()(
     },
   ),
 );
+
+/**
+ * What the dream history (src/stores/history.ts) saves for one dream: the same slice a page reload
+ * keeps, reopened at the overview (no node selected). Restored with `restore`, which validates it.
+ */
+export function historySnapshot(state: InvestigationState): string {
+  return JSON.stringify({
+    investigation: state.investigation,
+    phase: state.phase,
+    selectedNodeId: null,
+    collapsedBranchIds: state.collapsedBranchIds,
+    branchErrors: state.branchErrors,
+    dismissReasons: state.dismissReasons,
+    view: state.view,
+    savedExample: false,
+  });
+}

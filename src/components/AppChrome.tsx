@@ -6,9 +6,12 @@ import { Toaster } from "sonner";
 
 import "sonner/dist/styles.css";
 
+import { HistorySync } from "./history/HistorySync";
+
 export function AppChrome({ children }: { children: ReactNode }) {
   return (
     <MotionConfig reducedMotion="user">
+      <HistorySync />
       {children}
       <Toaster
         theme="dark"

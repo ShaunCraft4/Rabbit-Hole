@@ -6,6 +6,7 @@ import { motion } from "framer-motion";
 import { toast } from "sonner";
 
 import { DREAM, DreamScene } from "@/components/DreamScene";
+import { HistorySidebar } from "@/components/history/HistorySidebar";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { ApiClientError } from "@/lib/client/api";
@@ -115,8 +116,17 @@ export default function EntrancePage() {
     }
   }
 
+  function newDream() {
+    if (busy.current) return;
+    setQuestion("");
+    setError(null);
+    textareaRef.current?.focus();
+  }
+
   return (
-    <DreamScene className="dream-rise flex flex-1 flex-col">
+    <DreamScene className="dream-rise flex flex-1">
+    <HistorySidebar onNewDream={newDream} />
+    <div className="flex min-w-0 flex-1 flex-col">
     <motion.main
       className="mx-auto flex w-full max-w-2xl flex-1 flex-col justify-center gap-8 px-5 py-16"
       initial={false}
@@ -209,6 +219,7 @@ export default function EntrancePage() {
         <p className="text-xs text-paper/75">A saved example, not a live search.</p>
       </div>
     </motion.main>
+    </div>
     </DreamScene>
   );
 }

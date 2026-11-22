@@ -11,6 +11,7 @@ import {
 } from "@/lib/contracts";
 import type { AnalyzeResponse, PlanResponse, ReportResponse, ResearchResponse } from "@/lib/contracts";
 import type { Branch, Source } from "@/lib/types";
+import { useHistoryStore } from "@/stores/history";
 import { useInvestigationStore } from "@/stores/investigation";
 
 type Slot<T> = { current: { key: string; run: Promise<T> } | null };
@@ -72,6 +73,9 @@ export function runPlan(question: string): Promise<PlanResponse> {
     const store = useInvestigationStore.getState();
     store.startInvestigation(parsed.data.question);
     store.setPlan(plan);
+    // The planner's goal is a short title; it names this dream in the history sidebar.
+    const id = useInvestigationStore.getState().investigation?.id;
+    if (id) useHistoryStore.getState().nameDream(id, plan.goal);
     return plan;
   });
 }
